@@ -59,6 +59,7 @@ int main() {
     ifstream tabelaRegras("regras.csv");
     if (tabelaRegras.is_open()) {
         int ruleSet = 0;
+        int count = 0;
         string temp = "S";
         while ( getline(tabelaRegras,line) ) {
             vector<string> tableLine = split(line, ';');
@@ -72,7 +73,8 @@ int main() {
             rule.push_back(ruleTokens.size());
             rule.push_back(ruleSet);
             rules.push_back(rule);
-            printf("Regra: %s -> %d, Ruleset: %d\n", ruleName.c_str(), rule[0], rule[1]);
+            printf("(%d) %s -> %d, Ruleset: %d\n", count, ruleName.c_str(), rule[0], rule[1]);
+            count++;
         }
         tabelaRegras.close();
     } else cout << "ERRO ao abrir tabela de regras";
