@@ -57,7 +57,7 @@ varargslist;fpdef ASSIGN_OP test
 varargslist;fpdef COMMA varargslist
 varargslist;fpdef ASSIGN_OP test COMMA varargslist
 fpdef;NAME
- fpdef;LPAR fplist RPAR
+fpdef;LPAR fplist RPAR
 test;or_test
 test;or_test IF or_test ELSE test
 fplist;fpdef

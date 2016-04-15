@@ -99,32 +99,34 @@ int main() {
         string action_now = action[state][t->type-1];
         printf("Action: %s\n", action_now.c_str());
 
-        //caso SHIFT
-        if(action_now.at(0)=='S'){
-            printf("%s", "[SHIFT] -> ");
-            int newstate;
-            sscanf(action_now.c_str(), "S%d", &newstate); // le o novo estado depois do shift
-            states.push(newstate); // coloca o novo estado no topo da pilha
-            t = t->next; // passa pro proximo token
-            printf("Novo Estado: %d\n",newstate);
-        } else if(action_now.at(0)=='R') {
-            printf("%s", "[REDUCE] -> ");
-            int ruleToReduce;
-            sscanf(action_now.c_str(), "R%d", &ruleToReduce); // le o index da regra pra aplicar reduce
-            for( int i = 0; i < rules[ruleToReduce][0]; i++ ) {
-                states.pop(); // retira da pilha os tokens da regra
+        if(action_now!="") {
+            //caso SHIFT
+            if(action_now.at(0)=='S'){
+                printf("%s", "[SHIFT] -> ");
+                int newstate;
+                sscanf(action_now.c_str(), "S%d", &newstate); // le o novo estado depois do shift
+                states.push(newstate); // coloca o novo estado no topo da pilha
+                t = t->next; // passa pro proximo token
+                printf("Novo Estado: %d\n",newstate);
+            } else if(action_now.at(0)=='R') {
+                printf("%s", "[REDUCE] -> ");
+                int ruleToReduce;
+                sscanf(action_now.c_str(), "R%d", &ruleToReduce); // le o index da regra pra aplicar reduce
+                for( int i = 0; i < rules[ruleToReduce][0]; i++ ) {
+                    states.pop(); // retira da pilha os tokens da regra
+                }
+                state = states.top(); // pega o novo estado do topo da pilha
+                printf("Regra a Reduzir: %d, Numero de tokens da regra: %d, Ruleset: %d , Novo estado pos-pop: %d, ", ruleToReduce, rules[ruleToReduce][0], rules[ruleToReduce][1], state);
+                int newstate_r;
+                sscanf(go[state][rules[ruleToReduce][1]].c_str(), "%d", &newstate_r);
+                printf("Goto: %s\n", go[state][rules[ruleToReduce][1]].c_str());
+                states.push(newstate_r); // coloca o novo estado no topo da pilha
+            } else if(action_now == "acc") {
+                cout << "\n!!!!Entrada aceita!!!!!\n";
+                break;
             }
-            state = states.top(); // pega o novo estado do topo da pilha
-            printf("Regra a Reduzir: %d, Numero de tokens da regra: %d, Ruleset: %d , Novo estado pos-pop: %d, ", ruleToReduce, rules[ruleToReduce][0], rules[ruleToReduce][1], state);
-            int newstate_r;
-            sscanf(go[state][rules[ruleToReduce][1]-1].c_str(), "%d", &newstate_r);
-            printf("Goto: %s\n", go[state][rules[ruleToReduce][1]-1].c_str());
-            states.push(newstate_r); // coloca o novo estado no topo da pilha
-        } else if(action_now == "acc") {
-            cout << "Entrada aceita";
-            break;
         } else {
-            cout << "Erro de sintaxe detectado";
+            cout << "\n---Erro de sintaxe detectado---\n";
             break;
         }
     }
