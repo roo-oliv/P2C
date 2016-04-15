@@ -84,7 +84,7 @@ arith_expr;term
 arith_expr;term ARITH_OPR arith_expr
 term;factor
 term;factor ARITH_OPL term
-factor;SIGN factor
+factor;ARITH_OPR factor
 factor;power
 power;atom_expr
 power;atom_expr POW factor
@@ -92,56 +92,34 @@ atom_expr;atom
 atom_expr;atom compound_trailer
 atom;LPAR RPAR
 atom;LPAR yield_expr RPAR
-atom;LPAR testlist_comp RPAR
+atom;LPAR compound_test RPAR
 atom;LBKT RBKT
-atom;LBKT testlist_comp RBKT
+atom;LBKT compound_test RBKT
 atom;NAME
 atom;NUMBER
-atom;ELPS
 atom;NONE
 atom;TRUE
 atom;FALSE
 compound_trailer;trailer
 compound_trailer;trailer compound_trailer
-testlist_comp;test comp_for
-testlist_comp;test COMMA compound_test
-testlist_comp;test COMMA compound_test COMMA
 compound_test;test
 compound_test;test COMMA compound_test
-comp_for;FOR exprlist IN or_test
-comp_for;FOR exprlist IN or_test comp_iter
+compound_test;test COMMA compound_test COMMA
 trailer;LPAR RPAR
 trailer;LPAR arglist RPAR
-trailer;LBKT subscriptlist RBKT
-trailer;LBKT subscriptlist COMMA RBKT
+trailer;LBKT compound_test RBKT
+trailer;LBKT compound_test COMMA RBKT
 trailer;DOT NAME
 arglist;argument
 arglist;argument COMMA
 arglist;argument COMMA compound_arg
 arglist;argument COMMA compound_arg COMMA
-subscriptlist;subscript
-subscriptlist;subscript COMMA subscriptlist
-subscript;test
-subscript;lsubscript
-subscript;lsubscript rsubscript
-lsubscript;test COLON
-lsubscript;COLON
-rsubscript;test
-rsubscript;test sliceop
-rsubscript;sliceop
-sliceop;COLON
-sliceop;COLON test
 compound_expr;arith_expr
 compound_expr;arith_expr COMMA compound_expr
 argument;test
-argument;test comp_for
 argument;test ASSIGN_OP test
 argument;POW test
 compound_arg;argument
 compound_arg;argument COMMA compound_arg
-comp_iter;comp_for
-comp_iter;comp_if
-comp_if;IF or_test
-comp_if;IF or_test comp_iter
 yield_arg;FROM test
 yield_arg;testlist

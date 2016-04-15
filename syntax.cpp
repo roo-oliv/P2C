@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include "lexycal.h"
 using namespace std;
 
 
@@ -23,11 +24,14 @@ vector<string> split(string str, char delimiter) {
 
 int main() {
     
-    vector<vector<string>> action; // tabela action
-    vector<vector<string>> go; // tabela goto
-    vector<vector<int>> rules; // tabela de regras. [n][0] = numero de tokens na parte direita da regra, [n][1] = numero da regra pai (index na tabela - chamei de ruleSet)
+    Analyzer la;
+    la.process();
+    Token* t =  la.getList()->readHeading()->next;
     
-    Token* t; // ponteiro para o primeiro token da lista que o eddie já tem no código dele
+    vector< vector<string> > action; // tabela action
+    vector< vector<string> > go; // tabela goto
+    vector< vector<int> > rules; // tabela de regras. [n][0] = numero de tokens na parte direita da regra, [n][1] = numero da regra pai (index na tabela - chamei de ruleSet)
+    
     
     //le o csv da tabela action e preenche o vetor
     string line;
@@ -82,33 +86,33 @@ int main() {
     while(1) {
         //define estado atual como o estado do topo da pilha
         state = states.top();
-
         //pega a action atual na tabela a partir do estado e do token
         string action_now = action[state][t->type];
 
         //caso SHIFT
         if(action_now.at(0)=='S'){
             int newstate;
-            sscanf(action_now, "%*s%d", &newstate); // le o novo estado depois do shift
+            sscanf(action_now.c_str(), "%d", &newstate); // le o novo estado depois do shift
             states.push(newstate); // coloca o novo estado no topo da pilha
             t = t->next; // passa pro proximo token
         } else if(action_now.at(0)=='R') {
             int ruleToReduce;
-            sscanf(action_now, "%*s%d", &ruleToReduce); // le o index da regra pra aplicar reduce
+            sscanf(action_now.c_str(), "%*s%d", &ruleToReduce); // le o index da regra pra aplicar reduce
             for( int i = 0; i < rules[ruleToReduce][0]; i++ ) {
                 states.pop(); // retira da pilha os tokens da regra
             }
             state = states.top(); // pega o novo estado do topo da pilha
             int newstate;
-            sscanf(go[state][rules[ruleToReduce][1]],"%d", &newstate); // le o proximo estado na tabela goto
+            sscanf(go[state][rules[ruleToReduce][1]].c_str(),"%*s%d", &newstate); // le o proximo estado na tabela goto
             states.push(newstate); // coloca o novo estado no topo da pilha
         } else if(action_now == "acc") {
-            return 1;
+            cout << "Entrada aceita";
+            break;
         } else {
             cout << "Erro de sintaxe detectado";
             break;
         }
     }
     
-    return 1;
+    return 0;
 }
