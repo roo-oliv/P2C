@@ -1,6 +1,11 @@
-S;stmt NEWLINE
+S;stmt
+S;NEWLINE
+S;stmt S
+S;NEWLINE S
 stmt;simple_stmt
+stmt;simple_stmt NEWLINE
 stmt;compound_stmt
+stmt;compound_stmt NEWLINE
 simple_stmt;small_stmt
 simple_stmt;small_stmt SEMICOLON simple_stmt
 simple_stmt;small_stmt SEMICOLON
