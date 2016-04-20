@@ -169,7 +169,6 @@ int main() {
             }
             if(k==s) {
                 printf("%s\n","");
-                s = n-1;
             }
         }
         vector<Node*> children = queue[i]->children;
