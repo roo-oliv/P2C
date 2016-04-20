@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include "lexycal.h"
+#include "AST.h"
 using namespace std;
 
 
@@ -73,7 +74,11 @@ int main() {
             rule.push_back(ruleTokens.size());
             rule.push_back(ruleSet);
             rules.push_back(rule);
-            printf("(%d) %s -> %d, Ruleset: %d\n", count, ruleName.c_str(), rule[0], rule[1]);
+            printf("(%d) %s -> ", count, ruleName.c_str());
+            for(int i = 0; i < ruleTokens.size(); i++) {
+                printf("%s ", ruleTokens[i].c_str());
+            }
+            printf("%s\n", "");
             count++;
         }
         tabelaRegras.close();
@@ -85,6 +90,10 @@ int main() {
     // inicia a pilha de estados
     stack <int> states;
     int state;
+    
+    stack <Node*> nodes;
+    
+    AST ast;
     
     states.push(0);
     
@@ -104,16 +113,22 @@ int main() {
             if(action_now.at(0)=='S'){
                 printf("%s", "[SHIFT] -> ");
                 int newstate;
-                sscanf(action_now.c_str(), "S%d", &newstate); // le o novo estado depois do shift
+                sscanf(action_now.c_str(), "S%d", &newstate); // le o novo estado
                 states.push(newstate); // coloca o novo estado no topo da pilha
+                Node* leaf = ast.createLeaf(t);
+                nodes.push(leaf);
                 t = t->next; // passa pro proximo token
                 printf("Novo Estado: %d\n",newstate);
             } else if(action_now.at(0)=='R') {
                 printf("%s", "[REDUCE] -> ");
                 int ruleToReduce;
                 sscanf(action_now.c_str(), "R%d", &ruleToReduce); // le o index da regra pra aplicar reduce
+                Node *parent = ast.createNode(ruleToReduce);
                 for( int i = 0; i < rules[ruleToReduce][0]; i++ ) {
                     states.pop(); // retira da pilha os tokens da regra
+                    Node* child = nodes.top();
+                    ast.addChild(parent, child);
+                    nodes.pop();
                 }
                 state = states.top(); // pega o novo estado do topo da pilha
                 printf("Regra a Reduzir: %d, Numero de tokens da regra: %d, Ruleset: %d , Novo estado pos-pop: %d, ", ruleToReduce, rules[ruleToReduce][0], rules[ruleToReduce][1], state);
@@ -121,13 +136,53 @@ int main() {
                 sscanf(go[state][rules[ruleToReduce][1]].c_str(), "%d", &newstate_r);
                 printf("Goto: %s\n", go[state][rules[ruleToReduce][1]].c_str());
                 states.push(newstate_r); // coloca o novo estado no topo da pilha
+                nodes.push(parent);
             } else if(action_now == "acc") {
-                cout << "\n!!!!Entrada aceita!!!!!\n";
+                ast.setRoot(nodes.top());
+                cout << "\n!!!! Entrada aceita !!!!!\n\n";
                 break;
             }
         } else {
-            cout << "\n---Erro de sintaxe detectado---\n";
-            break;
+            if(t->type==33) {
+                t = t->next;
+            } else {
+                cout << "\n---Erro de sintaxe detectado---\n";
+                break;
+            }
+        }
+    }
+    
+    vector<Node*> queue;
+    queue.push_back(ast.getRoot());
+    int n = queue.size();
+    int s = queue.size()-1;
+    int old_n = 0;
+    for(int i = 0; i < n; i++) {
+        for(int k = old_n; k < n; k++){
+            if(queue[k]->regra!=-1) {
+                printf("R:%d ", queue[k]->regra);
+            } else {
+                printf("T:%d ", queue[k]->tk->type);
+            }
+            if(k==n-1) {
+                printf("%s", "| ");
+            }
+            if(k==s) {
+                printf("%s\n","");
+                s = n-1;
+            }
+        }
+        vector<Node*> children = queue[i]->children;
+        if(!children.empty()){
+            int m = children.size();
+            for(int j = m-1; j >= 0; j--) {
+                queue.push_back(children[j]);
+            }
+        }
+        old_n = n;
+        n = queue.size();
+        if(i==s) {
+            s = n-1;
         }
     }
     
