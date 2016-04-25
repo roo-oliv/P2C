@@ -1,7 +1,7 @@
-#include <lexical.hpp>
-#include <syntax.hpp>
+#include <compiler.hpp>
 
 int main() {
-    analyse();
+    compiler::SyntaxAnalyzer sa;
+    sa.analyze();
     return 0;
 }
