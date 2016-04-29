@@ -76,8 +76,21 @@ namespace compiler {
         std::vector<std::string> split(std::string, char);
         int fillTable(std::vector<std::vector<std::string>>&, std::string);
         int fillTable(std::vector<std::vector<int>>&, std::string);
+		AST* getAST();
         int analyze();
     private:
-
+		AST ast;
     };
+
+	class SemanticAnalyzer {
+	public:
+		SemanticAnalyzer();
+		~SemanticAnalyzer();
+		int analyze();
+		int isValid(Node*);
+		int getType(Token*);
+		int getResultType(int, std::vector<int>&);
+	private:
+		AST *ast;
+	};
 }

@@ -1,7 +1,7 @@
 #include <compiler.hpp>
 
 int main() {
-    compiler::SyntaxAnalyzer sa;
+    compiler::SemanticAnalyzer sa;
     sa.analyze();
     return 0;
 }

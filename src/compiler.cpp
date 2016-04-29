@@ -541,7 +541,6 @@ int compiler::SyntaxAnalyzer::analyze() {
     std::stack<int> states;
     int state;
     std::stack<Node*> nodes;
-    AST ast;
     states.push(0);
     int c = 0;
     // analizador sintático
@@ -646,4 +645,73 @@ int compiler::SyntaxAnalyzer::analyze() {
     }
 
     return 0;
+}
+
+compiler::AST *compiler::SyntaxAnalyzer::getAST() {return &ast;}
+
+compiler::SemanticAnalyzer::SemanticAnalyzer() {}
+
+compiler::SemanticAnalyzer::~SemanticAnalyzer() {}
+
+int compiler::SemanticAnalyzer::analyze() {
+    compiler::SyntaxAnalyzer sa;
+    sa.analyze();
+    ast = sa.getAST();
+    Node *root = ast->getRoot();
+    isValid(root);
+}
+
+int compiler::SemanticAnalyzer::isValid(Node* root) {
+    #ifdef DEBUG
+        if(root->tk!=NULL) std::cerr << "Token: " << root->tk->type << " # of children: " << root->children.size() << "\n";
+    #endif
+    if(root->children.empty()) return root->tk->type; // trivial case when node is a leaf
+    std::vector<Node*> *children = &root->children;
+    std::vector<int> childrenTypes;
+    for(std::vector<Node*>::iterator it = children->begin(); it != children->end(); ++it) {
+        childrenTypes.push_back(isValid(*it));
+    }
+    if(root->tk==NULL)
+        return getResultType(-1, childrenTypes);
+    return getResultType(root->tk->type, childrenTypes);
+}
+
+int compiler::SemanticAnalyzer::getResultType(int operatorType, std::vector<int> &childrenTypes) {
+    #ifdef DEBUG
+        std::cerr << "\nOperator Type: " << operatorType << "\nChildren Types: ";
+        for(int i=0; i<childrenTypes.size(); ++i) std::cerr << childrenTypes[i] << " ";
+        std::cerr << std::endl;
+    #endif
+    switch (operatorType) {
+        case -1:
+            return childrenTypes[0]; // PODE DAR ERRO
+        case 38: // '*', '/' and '%''
+            if(childrenTypes.size()!=2) throw std::runtime_error("Invalid number of operands");
+            for(int i=0; i<2; i++)
+                if(!(childrenTypes[i]==28 || childrenTypes[i]==15 || childrenTypes[i]==25))
+                    throw std::runtime_error("Invalid type of operands for operator of type "+operatorType);
+            return 28;
+        case 37: // '+' and '-'
+            if(childrenTypes.size()>2) throw std::runtime_error("Invalid number of operands");
+            if(childrenTypes.size()==1 && !(childrenTypes[0]==28 || childrenTypes[0]==15 || childrenTypes[0]==25))
+                throw std::runtime_error("Invalid type of operand for operator of type"+operatorType);
+            if(!(childrenTypes[0]==18 && childrenTypes[1]==18) ||
+                (!(childrenTypes[0]==28 || childrenTypes[0]==15 || childrenTypes[0]==25) &&
+                !(childrenTypes[1]==28 || childrenTypes[1]==15 || childrenTypes[1]==25)))
+            return childrenTypes[0];
+        case 4: // 'and'
+            break;
+        case 3: // 'or'
+            break;
+        case 5: // 'not'
+            break;
+        case 36: // 'continue'
+            break;
+        case 22: // 'break'
+            break;
+        case 30: // 'return'
+            break;
+        default:
+            break;
+    }
 }
