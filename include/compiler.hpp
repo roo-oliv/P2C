@@ -9,6 +9,10 @@
 #include <unordered_map>
 #include <utility>
 
+#ifdef DEBUG
+	extern int DEBUG_LEVEL, DEBUG_SPECIFIER;
+#endif
+
 namespace compiler {
 	struct Token;
     struct Indent;

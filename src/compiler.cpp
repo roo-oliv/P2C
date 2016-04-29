@@ -516,13 +516,15 @@ int compiler::SyntaxAnalyzer::fillTable(std::vector<std::vector<int>> &table, st
             rule.push_back(ruleSet);
             table.push_back(rule);
             #ifdef DEBUG
-                printf("(%d) %s -> ", count, ruleName.c_str());
-                for(int i = 0; i < ruleTokens.size(); i++) {
-                    printf("%s ", ruleTokens[i].c_str());
+                if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>2) {
+                    printf("(%d) %s -> ", count, ruleName.c_str());
+                    for(int i = 0; i < ruleTokens.size(); i++) {
+                        printf("%s ", ruleTokens[i].c_str());
+                    }
+                    printf("%s\n", "");
                 }
-                printf("%s\n", "");
-                count++;
             #endif
+            count++;
         }
         file.close();
         return 0;
@@ -541,8 +543,10 @@ int compiler::SyntaxAnalyzer::analyze() {
     std::vector<std::vector<int>> rules; // tabela de regras. [n][0] = numero de tokens na parte direita da regra, [n][1] = numero da regra pai (index na tabela - chamei de ruleSet)
 
     #ifdef DEBUG
-        printf("\n\n%s\n\n", "--------------DEBUG MODE ON----------------");
-        printf("\n\n%s\n\n", "Loading tables...");
+        if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) {
+            printf("\n\n%s\n\n", "--------------DEBUG MODE ON----------------");
+            printf("\n\n%s\n\n", "Loading tables...");
+        }
     #endif
     // Fill action and goto tables from CSV tables
     try {
@@ -554,8 +558,10 @@ int compiler::SyntaxAnalyzer::analyze() {
         return 1;
     }
     #ifdef DEBUG
-        printf("\n\n%s\n\n", "Tables successfuly loaded!");
-        printf("\n%s\n\n", "--------------SINTAX ANALYSER----------------");
+        if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) {
+            printf("\n\n%s\n\n", "Tables successfuly loaded!");
+            printf("\n%s\n\n", "--------------SINTAX ANALYSER----------------");
+        }
     #endif
     // inicia a pilha de estados
     std::stack<int> states;
@@ -569,19 +575,25 @@ int compiler::SyntaxAnalyzer::analyze() {
         //define estado atual como o estado do topo da pilha
         state = states.top();
         #ifdef DEBUG
-            printf("Estado: %d, Token atual: %d (%s), ",state,t->type-1,t->lexema.c_str());
+            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                printf("Estado: %d, Token atual: %d (%s), ",state,t->type-1,t->lexema.c_str());
+            }
         #endif
         //pega a action atual na tabela a partir do estado e do token
         std::string action_now = action[state][t->type-1];
         #ifdef DEBUG
-            printf("Action: %s\n", action_now.c_str());
+            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                printf("Action: %s\n", action_now.c_str());
+            }
         #endif
 
         if(action_now!="") {
             //caso SHIFT
             if(action_now.at(0)=='S'){
                 #ifdef DEBUG
-                    printf("%s", "[SHIFT] -> ");
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                        printf("%s", "[SHIFT] -> ");
+                    }
                 #endif
                 int newstate;
                 sscanf(action_now.c_str(), "S%d", &newstate); // le o novo estado
@@ -590,11 +602,15 @@ int compiler::SyntaxAnalyzer::analyze() {
                 nodes.push(leaf);
                 t = t->next; // passa pro proximo token
                 #ifdef DEBUG
-                    printf("Novo Estado: %d\n",newstate);
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                        printf("Novo Estado: %d\n",newstate);
+                    }
                 #endif
             } else if(action_now.at(0)=='R') {
                 #ifdef DEBUG
-                    printf("%s", "[REDUCE] -> ");
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                        printf("%s", "[REDUCE] -> ");
+                    }
                 #endif
                 int ruleToReduce;
                 sscanf(action_now.c_str(), "R%d", &ruleToReduce); // le o index da regra pra aplicar reduce
@@ -607,12 +623,16 @@ int compiler::SyntaxAnalyzer::analyze() {
                 }
                 state = states.top(); // pega o novo estado do topo da pilha
                 #ifdef DEBUG
-                    printf("Regra a Reduzir: %d, Numero de tokens da regra: %d, Ruleset: %d , Novo estado pos-pop: %d, ", ruleToReduce, rules[ruleToReduce][0], rules[ruleToReduce][1], state);
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                        printf("Regra a Reduzir: %d, Numero de tokens da regra: %d, Ruleset: %d , Novo estado pos-pop: %d, ", ruleToReduce, rules[ruleToReduce][0], rules[ruleToReduce][1], state);
+                    }
                 #endif
                 int newstate_r;
                 sscanf(go[state][rules[ruleToReduce][1]].c_str(), "%d", &newstate_r);
                 #ifdef DEBUG
-                    printf("Goto: %s\n", go[state][rules[ruleToReduce][1]].c_str());
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>1) {
+                        printf("Goto: %s\n", go[state][rules[ruleToReduce][1]].c_str());
+                    }
                 #endif
                 states.push(newstate_r); // coloca o novo estado no topo da pilha
                 nodes.push(parent);
@@ -631,38 +651,42 @@ int compiler::SyntaxAnalyzer::analyze() {
         }
     }
 
-    std::vector<Node*> queue;
-    queue.push_back(ast.getRoot());
-    int n = queue.size();
-    int s = queue.size()-1;
-    int old_n = 0;
-    for(int i = 0; i < n; i++) {
-        for(int k = old_n; k < n; k++){
-            if(queue[k]->regra!=-1) {
-                printf("R:%d ", queue[k]->regra);
-            } else {
-                printf("T:%d ", queue[k]->tk->type);
-            }
-            if(k==n-1) {
-                printf("%s", "| ");
-            }
-            if(k==s) {
-                printf("%s\n","");
+    #ifdef DEBUG
+        if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>0) {
+            std::vector<Node*> queue;
+            queue.push_back(ast.getRoot());
+            int n = queue.size();
+            int s = queue.size()-1;
+            int old_n = 0;
+            for(int i = 0; i < n; i++) {
+                for(int k = old_n; k < n; k++){
+                    if(queue[k]->regra!=-1) {
+                        printf("R:%d ", queue[k]->regra);
+                    } else {
+                        printf("T:%d ", queue[k]->tk->type);
+                    }
+                    if(k==n-1) {
+                        printf("%s", "| ");
+                    }
+                    if(k==s) {
+                        printf("%s\n","");
+                    }
+                }
+                std::vector<Node*> children = queue[i]->children;
+                if(!children.empty()){
+                    int m = children.size();
+                    for(int j = m-1; j >= 0; j--) {
+                        queue.push_back(children[j]);
+                    }
+                }
+                old_n = n;
+                n = queue.size();
+                if(i==s) {
+                    s = n-1;
+                }
             }
         }
-        std::vector<Node*> children = queue[i]->children;
-        if(!children.empty()){
-            int m = children.size();
-            for(int j = m-1; j >= 0; j--) {
-                queue.push_back(children[j]);
-            }
-        }
-        old_n = n;
-        n = queue.size();
-        if(i==s) {
-            s = n-1;
-        }
-    }
+    #endif
 
     return 0;
 }
@@ -680,7 +704,9 @@ int compiler::SemanticAnalyzer::analyze() {
     Node *root = ast->getRoot();
     try {
         #ifdef DEBUG
-            std::cerr << "\n\n----------Starting semantic analasys----------\n";
+            if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) {
+                std::cerr << "\n\n----------Starting semantic analasys----------\n";
+            }
         #endif
         Token resultant = descend(root);
         if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
@@ -704,12 +730,14 @@ compiler::Token compiler::SemanticAnalyzer::descend(Node* root) {
 
 compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expression) {
     #ifdef DEBUG
-        if(expression.size()>1) {
-            std::cerr << "Concatenating expression: ";
-            for(auto &i : expression) {
-                std::cerr << i.lexema << "(" << i.type << ")" << " ";
+        if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>1) {
+            if(expression.size()>1) {
+                std::cerr << "Concatenating expression: ";
+                for(auto &i : expression) {
+                    std::cerr << i.lexema << "(" << i.type << ")" << " ";
+                }
+                std::cerr << std::endl;
             }
-            std::cerr << std::endl;
         }
     #endif
     switch(expression.size()) {
