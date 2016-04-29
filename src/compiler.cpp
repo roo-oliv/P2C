@@ -20,13 +20,14 @@ struct compiler::Node {
 
 struct compiler::Symbol {
     std::vector<std::pair<Token*, int>> tokens;
-}
+};
 
 compiler::TokenList::TokenList() {
     heading = new Token;
     trailing = heading;
     size = 0;
 }
+
 compiler::TokenList::~TokenList() { }
 
 //Inserir novos tokens na lista
@@ -141,15 +142,16 @@ compiler::SymbolTable::SymbolTable() { }
 
 compiler::SymbolTable::~SymbolTable() { }
 
-std::pair<std::unordered_map<std::string, Symbol*>::iterator,bool> compiler::SymbolTable::addEntry(Token &token, int scope) {
+/*std::pair<std::unordered_map<std::string, compiler::Symbol*>::iterator,bool> compiler::SymbolTable::addEntry(Token &token, int scope) {
+    this.find(token->lexema);
     Symbol *s = new Symbol;
     s->tokens.emplace_back(&token, scope);
-    return table.insert(s);
+    return table.insert(s->tokens, s);
 }
 
-void compiler::SymbolTable::removeEntry(int id) { table.erase(id); }
+void compiler::SymbolTable::removeEntry(std::string key) { table.erase(key); }
 
-std::unordered_map<std::string, Symbol*>::iterator compiler::SymbolTable::find(int id) { table.find(id); }
+std::unordered_map<std::string, compiler::Symbol*>::iterator compiler::SymbolTable::find(std::string key) { table.find(key); }*/
 
 compiler::LexycalAnalyzer::LexycalAnalyzer() {
     content = "";
@@ -665,7 +667,7 @@ int compiler::SyntaxAnalyzer::analyze() {
     return 0;
 }
 
-compiler::AST *compiler::SyntaxAnalyzer::getAST() {return &ast;}
+compiler::AST* compiler::SyntaxAnalyzer::getAST() {return &ast;}
 
 compiler::SemanticAnalyzer::SemanticAnalyzer() {}
 
@@ -676,31 +678,79 @@ int compiler::SemanticAnalyzer::analyze() {
     sa.analyze();
     ast = sa.getAST();
     Node *root = ast->getRoot();
-    isValid(root);
-}
-
-int compiler::SemanticAnalyzer::isValid(Node* root) {
-    #ifdef DEBUG
-        if(root->tk!=NULL) std::cerr << "Token: " << root->tk->type << " # of children: " << root->children.size() << "\n";
-    #endif
-    if(root->children.empty()) return root->tk->type; // trivial case when node is a leaf
-    std::vector<Node*> *children = &root->children;
-    std::vector<int> childrenTypes;
-    for(std::vector<Node*>::iterator it = children->begin(); it != children->end(); ++it) {
-        childrenTypes.push_back(isValid(*it));
+    try {
+        #ifdef DEBUG
+            std::cerr << "\n\n----------Starting semantic alasys----------\n";
+        #endif
+        descend(root);
+    } catch (char const* exception) {
+        std::cerr << exception;
+        return 1;
     }
-    if(root->tk==NULL)
-        return getResultType(-1, childrenTypes);
-    return getResultType(root->tk->type, childrenTypes);
 }
 
-int compiler::SemanticAnalyzer::getResultType(int operatorType, std::vector<int> &childrenTypes) {
+compiler::Token compiler::SemanticAnalyzer::descend(Node* root) {
+    if(root->regra==-1) return *(root->tk);
+    std::vector<Token> expression;
+    for(auto &i : root->children) {
+        expression.push_back(descend(i));
+    }
+    return concat(expression);
+}
+
+compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expression) {
     #ifdef DEBUG
-        std::cerr << "\nOperator Type: " << operatorType << "\nChildren Types: ";
-        for(int i=0; i<childrenTypes.size(); ++i) std::cerr << childrenTypes[i] << " ";
-        std::cerr << std::endl;
+        if(expression.size()>1) {
+            std::cerr << "Concatenating expression: ";
+            for(auto &i : expression) {
+                std::cerr << i.lexema << "(" << i.type << ")" << " ";
+            }
+            std::cerr << std::endl;
+        }
     #endif
-    switch (operatorType) {
+    switch(expression.size()) {
+        case 1:
+            return expression[0];
+        case 2:
+            switch(expression[0].type) {
+                case 37: // '+' or '-'
+                    switch (expression[1].type) {
+                        case 17: // '(' indicates PyTupleObject
+                            throwSemanticException(expression);
+                        case 18: // '[' indicates PyListObject
+                            throwSemanticException(expression);
+                        default:
+                            return expression[1];
+                    }
+                default:
+                    if(expression[0].type == 33)
+                        return expression[1];
+                    throw("Unknown error.\n");
+            }
+        case 3:
+            switch (expression[1].type) {
+                case 37:
+                    if(expression[1].lexema=="+") {
+                        if(expression[0].type==18 && expression[2].type==18)
+                            return expression[0];
+                        else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                            return expression[0];
+                        else
+                            throwSemanticException(expression);
+                    } else {
+                        if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                            return expression[0];
+                        else
+                            throwSemanticException(expression);
+                    }
+                case 38:
+                    return expression[0];
+                default:
+                    return expression[2];
+            }
+        default:
+            throw("Unknown error.\n");
+    /*switch (operatorType) {
         case -1:
             return childrenTypes[0]; // PODE DAR ERRO
         case 38: // '*', '/' and '%''
@@ -730,6 +780,15 @@ int compiler::SemanticAnalyzer::getResultType(int operatorType, std::vector<int>
         case 30: // 'return'
             break;
         default:
-            break;
+            break;*/
     }
+}
+
+void compiler::SemanticAnalyzer::throwSemanticException(std::vector<Token> &expression) {
+    std::stringstream ss;
+    ss << "Error in expression at line " << expression[0].lin << " from column " << expression[0].col <<
+          ":\n\t" << expression[0].lexema << " PyTupleObject" <<
+          "\nSemantic Exception: Can't handle unary operator \'" << expression[0].lexema << "\' for PyTupleObject.\n";
+    throw("Semantic Exception.\n");
+    throw std::runtime_error("Semantic Exception!\n");
 }

@@ -62,10 +62,10 @@ namespace compiler {
 		~SymbolTable();
 		std::pair<std::unordered_map<std::string,Symbol*>::iterator,bool> addEntry(Token&, int);
 		void removeEntry(int);
-		std::unordered_map<std::string,Symbol*>::iterator find(int);
+		std::unordered_map<std::string,Symbol*>::iterator find(std::string);
 	private:
 		std::unordered_map<std::string,Symbol*> table;
-	}
+	};
 
 	class LexycalAnalyzer {
     public:
@@ -101,11 +101,12 @@ namespace compiler {
 		SemanticAnalyzer();
 		~SemanticAnalyzer();
 		int analyze();
-		int isValid(Node*);
-		int getType(Token*);
-		int getResultType(int, std::vector<int>&);
 	private:
 		AST *ast;
 		SymbolTable table;
+		Token descend(Node*);
+		int getType(Token*);
+		Token concat(std::vector<Token>&);
+		void throwSemanticException(std::vector<Token>&);
 	};
 }
