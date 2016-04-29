@@ -680,9 +680,13 @@ int compiler::SemanticAnalyzer::analyze() {
     Node *root = ast->getRoot();
     try {
         #ifdef DEBUG
-            std::cerr << "\n\n----------Starting semantic alasys----------\n";
+            std::cerr << "\n\n----------Starting semantic analasys----------\n";
         #endif
-        descend(root);
+        Token resultant = descend(root);
+        if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
+            std::vector<Token> v = {resultant};
+            throwSemanticException(v);
+        }
     } catch (char const* exception) {
         std::cerr << exception;
         return 1;
@@ -712,18 +716,21 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
         case 1:
             return expression[0];
         case 2:
-            switch(expression[0].type) {
+            switch(expression[1].type) {
                 case 37: // '+' or '-'
-                    switch (expression[1].type) {
+                    switch (expression[0].type) {
                         case 17: // '(' indicates PyTupleObject
                             throwSemanticException(expression);
                         case 18: // '[' indicates PyListObject
                             throwSemanticException(expression);
                         default:
-                            return expression[1];
+                            return expression[0];
                     }
                 default:
-                    if(expression[0].type == 33)
+                    if(expression[0].type == 33 || // "\n"
+                       expression[1].type == 30 || // "return"
+                       (expression[1].type == 33 &&
+                           !(expression[0].type==30 || expression[0].type==22 || expression[0].type==36)))
                         return expression[1];
                     throw("Unknown error.\n");
             }
@@ -749,7 +756,17 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                     return expression[2];
             }
         default:
-            throw("Unknown error.\n");
+            switch (expression[0].type) {
+                case 29: // Indent
+                    return expression[1];
+                case 30: // "return"
+                    if(expression.back().type==8)
+                        return expression.end()[-2];
+                    else
+                        throwSemanticException(expression);
+                default:
+                    throw("Unknown error.\n");
+            }
     /*switch (operatorType) {
         case -1:
             return childrenTypes[0]; // PODE DAR ERRO
