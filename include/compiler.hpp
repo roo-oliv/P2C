@@ -6,11 +6,14 @@
 #include <vector>
 #include <stack>
 #include <stdexcept>
+#include <unordered_map>
+#include <utility>
 
 namespace compiler {
 	struct Token;
     struct Indent;
     struct Node;
+	struct Symbol;
 
 	class TokenList {
     public:
@@ -40,6 +43,30 @@ namespace compiler {
         int nElem, size;
     };
 
+	class AST {
+    public:
+        AST();
+        ~AST();
+        Node* createNode(int);
+        Node* createLeaf(Token*);
+        Node* addChild(Node*, Node*);
+        Node* getRoot();
+        void setRoot(Node*);
+    private:
+        Node* root;
+    };
+
+	class SymbolTable {
+	public:
+		SymbolTable();
+		~SymbolTable();
+		std::pair<std::unordered_map<std::string,Symbol*>::iterator,bool> addEntry(Token&, int);
+		void removeEntry(int);
+		std::unordered_map<std::string,Symbol*>::iterator find(int);
+	private:
+		std::unordered_map<std::string,Symbol*> table;
+	}
+
 	class LexycalAnalyzer {
     public:
         LexycalAnalyzer();
@@ -56,19 +83,6 @@ namespace compiler {
         TokenList *list;
         IndentStack *stack;
         int state, line, column, initial_col, space, indentLevel;
-    };
-
-    class AST {
-    public:
-        AST();
-        ~AST();
-        Node* createNode(int);
-        Node* createLeaf(Token*);
-        Node* addChild(Node*, Node*);
-        Node* getRoot();
-        void setRoot(Node*);
-    private:
-        Node* root;
     };
 
     class SyntaxAnalyzer {
@@ -92,5 +106,6 @@ namespace compiler {
 		int getResultType(int, std::vector<int>&);
 	private:
 		AST *ast;
+		SymbolTable table;
 	};
 }

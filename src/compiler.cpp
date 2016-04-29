@@ -18,6 +18,10 @@ struct compiler::Node {
     Node *parent;
 };
 
+struct compiler::Symbol {
+    std::vector<std::pair<Token*, int>> tokens;
+}
+
 compiler::TokenList::TokenList() {
     heading = new Token;
     trailing = heading;
@@ -97,6 +101,55 @@ int compiler::IndentStack::getNElem() { return nElem; }
 
 //Verificar a quantidade de espaços que foram inseridos no total
 int compiler::IndentStack::getSize() { return size; }
+
+compiler::AST::AST(){
+    Node* root = new Node;
+}
+compiler::AST::~AST() {}
+
+compiler::Node* compiler::AST::createNode(int regra){
+    Node *newNode = new Node;
+    newNode->regra = regra;
+    newNode->tk = NULL;
+    newNode->parent = root;
+    return newNode;
+}
+
+compiler::Node* compiler::AST::createLeaf(Token* tk){
+    Node *newNode = new Node;
+    newNode->tk = tk;
+    newNode->regra = -1;
+    newNode->parent = root;
+    return newNode;
+}
+
+compiler::Node* compiler::AST::addChild(Node* parent, Node* child){
+    parent->children.push_back(child);
+    child->parent = parent;
+    return parent;
+}
+
+compiler::Node* compiler::AST::getRoot(){
+    return root;
+}
+
+void compiler::AST::setRoot(Node* nroot){
+    root = nroot;
+}
+
+compiler::SymbolTable::SymbolTable() { }
+
+compiler::SymbolTable::~SymbolTable() { }
+
+std::pair<std::unordered_map<std::string, Symbol*>::iterator,bool> compiler::SymbolTable::addEntry(Token &token, int scope) {
+    Symbol *s = new Symbol;
+    s->tokens.emplace_back(&token, scope);
+    return table.insert(s);
+}
+
+void compiler::SymbolTable::removeEntry(int id) { table.erase(id); }
+
+std::unordered_map<std::string, Symbol*>::iterator compiler::SymbolTable::find(int id) { table.find(id); }
 
 compiler::LexycalAnalyzer::LexycalAnalyzer() {
     content = "";
@@ -414,41 +467,6 @@ compiler::TokenList* compiler::LexycalAnalyzer::getList() { return list; }
 int compiler::LexycalAnalyzer::getLine() { return line; }
 
 int compiler::LexycalAnalyzer::getColumn(){ return column; }
-
-compiler::AST::AST(){
-    Node* root = new Node;
-}
-compiler::AST::~AST() {}
-
-compiler::Node* compiler::AST::createNode(int regra){
-    Node *newNode = new Node;
-    newNode->regra = regra;
-    newNode->tk = NULL;
-    newNode->parent = root;
-    return newNode;
-}
-
-compiler::Node* compiler::AST::createLeaf(Token* tk){
-    Node *newNode = new Node;
-    newNode->tk = tk;
-    newNode->regra = -1;
-    newNode->parent = root;
-    return newNode;
-}
-
-compiler::Node* compiler::AST::addChild(Node* parent, Node* child){
-    parent->children.push_back(child);
-    child->parent = parent;
-    return parent;
-}
-
-compiler::Node* compiler::AST::getRoot(){
-    return root;
-}
-
-void compiler::AST::setRoot(Node* nroot){
-    root = nroot;
-}
 
 std::vector<std::string> compiler::SyntaxAnalyzer::split(std::string str, char delimiter) {
     std::vector<std::string> internal;
