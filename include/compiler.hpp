@@ -21,6 +21,15 @@ namespace compiler {
 
 	typedef std::unordered_map<std::string, std::vector<Symbol*>> HashTable;
 
+	class exception: public std::exception {
+	public:
+		exception(std::vector<Token>&, std::string);
+		virtual const char* what() const throw();
+	private:
+		std::string message;
+	};
+
+
 	class TokenList {
     public:
         TokenList();
@@ -66,9 +75,9 @@ namespace compiler {
 	public:
 		SymbolTable();
 		~SymbolTable();
-		auto addEntry(std::string, int, int, std::pair<int, int>, int, std::string);
-		void removeEntry(std::string, int);
-		auto find(std::string);
+		auto insert(std::string, int, int, std::pair<int, int>, int, std::string);
+		void erase(std::string, int);
+		auto lookup(std::string);
 	private:
 		HashTable table;
 	};
@@ -110,9 +119,9 @@ namespace compiler {
 	private:
 		AST *ast;
 		SymbolTable table;
+		void decorate(AST*);
 		Token descend(Node*);
 		int getType(Token*);
 		Token concat(std::vector<Token>&);
-		void throwSemanticException(std::vector<Token>&);
 	};
 }

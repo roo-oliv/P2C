@@ -12,7 +12,7 @@ struct compiler::Indent {
 };
 
 struct compiler::Node {
-    int regra;
+    int regra, kind, type, scope;
     Token *tk;
     std::vector<Node*> children;
     Node *parent;
@@ -23,6 +23,19 @@ struct compiler::Symbol {
     std::pair<int, int> pos; // position = (line, column)
     std::string name, content;
 };
+
+compiler::exception::exception(std::vector<Token> &expression, std::string specification) {
+    std::stringstream ss;
+    ss << "Error found in expression at line " << expression.back().lin << ", column " << expression.back().col << ":\n\t";
+    for (unsigned i = expression.size(); i-- > 0; )
+        ss << expression[i].lexema << " ";
+    ss << "\n" << specification << std::endl;
+    message = ss.str();
+}
+
+const char* compiler::exception::what() const throw() {
+    return message.c_str();
+}
 
 compiler::TokenList::TokenList() {
     heading = new Token;
@@ -144,7 +157,7 @@ compiler::SymbolTable::SymbolTable() { }
 
 compiler::SymbolTable::~SymbolTable() { }
 
-auto compiler::SymbolTable::addEntry(std::string name, int kind, int type, std::pair<int, int> pos, int scope, std::string content) {
+auto compiler::SymbolTable::insert(std::string name, int kind, int type, std::pair<int, int> pos, int scope, std::string content) {
     Symbol *s = new Symbol;
     s->name = name;
     s->kind = kind;
@@ -162,7 +175,7 @@ auto compiler::SymbolTable::addEntry(std::string name, int kind, int type, std::
     }
 }
 
-void compiler::SymbolTable::removeEntry(std::string name, int scope) {
+void compiler::SymbolTable::erase(std::string name, int scope) {
     auto it = table.find(name);
     if(it!=table.end()) {
         for(auto i = it->second.begin(); i != it->second.end(); ++i) {
@@ -175,12 +188,12 @@ void compiler::SymbolTable::removeEntry(std::string name, int scope) {
     }
 }
 
-auto compiler::SymbolTable::find(std::string name) { table.find(name); }
+auto compiler::SymbolTable::lookup(std::string name) { table.find(name); }
 
 compiler::LexycalAnalyzer::LexycalAnalyzer() {
     content = "";
     column = state = initial_col = space = 0;
-    line = 1;
+    line = 0;
     dot = false;
     list = new TokenList();
     stack = new IndentStack();
@@ -192,6 +205,11 @@ compiler::LexycalAnalyzer::~LexycalAnalyzer() {
 
 //Funcao de leitura e criacao dos tokens
 compiler::TokenList* compiler::LexycalAnalyzer::process() {
+    #ifdef DEBUG
+        if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==1) {
+            printf("\n\n%s\n\n", "---------LEXYCAL ANALYZER---------");
+        }
+    #endif
     while( std::cin >> std::noskipws >> c ) {
         column++;
 
@@ -516,7 +534,7 @@ int compiler::SyntaxAnalyzer::fillTable(std::vector<std::vector<std::string>> &t
         file.close();
         return 0;
     } else {
-        throw std::runtime_error("Error while opening CSV");
+        throw std::runtime_error("Error while opening "+path);
     }
 }
 
@@ -568,7 +586,6 @@ int compiler::SyntaxAnalyzer::analyze() {
 
     #ifdef DEBUG
         if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) {
-            printf("\n\n%s\n\n", "--------------DEBUG MODE ON----------------");
             printf("\n\n%s\n\n", "Loading tables...");
         }
     #endif
@@ -584,7 +601,7 @@ int compiler::SyntaxAnalyzer::analyze() {
     #ifdef DEBUG
         if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) {
             printf("\n\n%s\n\n", "Tables successfuly loaded!");
-            printf("\n%s\n\n", "--------------SINTAX ANALYSER----------------");
+            printf("\n%s\n\n", "--------SINTAX ANALYSER--------");
         }
     #endif
     // inicia a pilha de estados
@@ -730,21 +747,29 @@ int compiler::SemanticAnalyzer::analyze() {
     sa.analyze();
     ast = sa.getAST();
     Node *root = ast->getRoot();
+    std::stringstream ss;
+    exception *e;
     try {
         #ifdef DEBUG
             if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) {
-                std::cerr << "\n\nProceeding to semantic analisys\n\n";
+                std::cerr << "\n\n---------SEMANTIC ANALYZER---------\n\n";
             }
         #endif
         Token resultant = descend(root);
         if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
-            std::vector<Token> v = {resultant};
-            throwSemanticException(v);
+            std::vector<Token> expression = {resultant};
+            ss << "Unable to handle expression.";
+            e = new exception(expression, ss.str());
+            throw *e;
         }
-    } catch (char const* exception) {
-        std::cerr << exception;
+    } catch (compiler::exception &e) {
+		std::cerr << e.what() << std::endl;
         return 1;
-    }
+	}
+}
+
+void compiler::SemanticAnalyzer::decorate(AST* ast) {
+
 }
 
 compiler::Token compiler::SemanticAnalyzer::descend(Node* root) {
@@ -768,6 +793,8 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
             }
         }
     #endif
+    std::stringstream ss;
+    exception *e;
     switch(expression.size()) {
         case 1:
             return expression[0];
@@ -776,9 +803,15 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                 case 37: // '+' or '-'
                     switch (expression[0].type) {
                         case 17: // '(' indicates PyTupleObject
-                            throwSemanticException(expression);
+                            ss << "SemanticException: Unary operator \'" << expression[1].lexema
+                               << "\' doesn\'t expect operand of type PyTupleObject.";
+                            e = new exception(expression, ss.str());
+                            throw *e;
                         case 18: // '[' indicates PyListObject
-                            throwSemanticException(expression);
+                            ss << "SemanticException: Unary operator \'" << expression[1].lexema
+                               << "\' doesn\'t expect operand of type PyListObject.";
+                            e = new exception(expression, ss.str());
+                            throw *e;
                         default:
                             return expression[0];
                     }
@@ -788,42 +821,57 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                        (expression[1].type == 33 &&
                            !(expression[0].type==30 || expression[0].type==22 || expression[0].type==36)))
                         return expression[1];
-                    throw("Unknown error.\n");
+                    ss << "SemanticException: Can't handle operation between \'" << expression[1].lexema
+                       << " and " << expression[0].lexema << ".";
+                    e = new exception(expression, ss.str());
+                    throw *e;
             }
         case 3:
             switch (expression[1].type) {
                 case 37: // '+' or '-'
                     if(expression[1].lexema=="+") {
-                        if(expression[0].type==18 && expression[2].type==18)
+                        if(expression[0].type==18 && expression[2].type==18) {
                             return expression[0];
-                        else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                        } else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17)) {
                             return expression[0];
-                        else
-                            throwSemanticException(expression);
+                        } else {
+                            ss << "SemanticException: Operator \'+\' doesn\'t expect operands of given types.";
+                            e = new exception(expression, ss.str());
+                            throw *e;
+                        }
                     } else {
-                        if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                        if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17)) {
                             return expression[0];
-                        else
-                            throwSemanticException(expression);
+                        } else {
+                            ss << "SemanticException: Operator \'-\' doesn\'t expect operands of given types.";
+                            e = new exception(expression, ss.str());
+                            throw *e;
+                        }
                     }
                 case 38: // '*', '/' or '%'
-                    if(expression[0].type==18 || expression[1].type==18 || expression[0].type==17 || expression[1].type==17)
-                        throwSemanticException(expression);
+                    if(expression[0].type==18 || expression[1].type==18 || expression[0].type==17 || expression[1].type==17) {
+                        ss << "SemanticException: Operator \'" << expression[1].lexema << "\' doesn\'t expect operands of given types.";
+                        e = new exception(expression, ss.str());
+                        throw *e;
+                    }
                     return expression[0];
                 case 34: // '>', '<', "!=", "==", ">=" or "<="
                     if(expression[0].type==18 && expression[2].type==18) {
                         return expression[0];
-                    } else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                    } else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17)) {
                         return expression[0];
-                    else
-                        throwSemanticException(expression);
-                case 39: // '='
+                    } else {
+                        ss << "SemanticException: Operator \'" << expression[1].lexema << "\' doesn\'t expect operands of given types.";
+                        e = new exception(expression, ss.str());
+                        throw *e;
+                    }
+                /*case 39: // '='
 
                 case 41: // "+=", "-=", "*=", "/=" or "%="
 
                 case 9: // "**"
 
-                default:
+                */default:
                     return expression[2];
             }
         default:
@@ -831,12 +879,17 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                 case 29: // Indent
                     return expression[1];
                 case 30: // "return"
-                    if(expression.back().type==8)
+                    if(expression.back().type==8) {
                         return expression.end()[-2];
-                    else
-                        throwSemanticException(expression);
+                    } else {
+                        ss << "SemanticException: Unable to handle \'" << expression[0].lexema << "\'";
+                        e = new exception(expression, ss.str());
+                        throw *e;
+                    }
                 default:
-                    throw("Unknown error.\n");
+                ss << "SemanticException: Unable to handle expression.";
+                e = new exception(expression, ss.str());
+                throw *e;
             }
     /*switch (operatorType) {
         case -1:
@@ -870,13 +923,4 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
         default:
             break;*/
     }
-}
-
-void compiler::SemanticAnalyzer::throwSemanticException(std::vector<Token> &expression) {
-    std::stringstream ss;
-    ss << "Error in expression at line " << expression[0].lin << " from column " << expression[0].col <<
-          ":\n\t" << expression[0].lexema << " PyTupleObject" <<
-          "\nSemantic Exception: Can't handle unary operator \'" << expression[0].lexema << "\' for PyTupleObject.\n";
-    throw("Semantic Exception.\n");
-    throw std::runtime_error("Semantic Exception!\n");
 }

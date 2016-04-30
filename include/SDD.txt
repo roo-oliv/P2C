@@ -1,0 +1,116 @@
+S -> stmt : S.type = stmt.type : S.kind = stmt.kind : S.content = stmt.content : S.scope = stmt.scope : S.pos = stmt.pos
+S -> NEWLINE : S.type = 
+S -> stmt S
+S -> NEWLINE S
+stmt -> simple_stmt
+stmt -> compound_stmt
+simple_stmt -> small_stmt NEWLINE
+simple_stmt -> small_stmt SEMICOLON simple_stmt NEWLINE
+simple_stmt -> small_stmt SEMICOLON NEWLINE
+small_stmt -> expr_stmt
+small_stmt -> DEL exprlist
+small_stmt -> PASS
+small_stmt -> flow_stmt
+small_stmt -> GLOBAL name_stmt
+small_stmt -> NONLOCAL name_stmt
+expr_stmt -> testlist
+expr_stmt -> testlist AUGASSIGN_OP yield_expr
+expr_stmt -> testlist AUGASSIGN_OP testlist
+expr_stmt -> testlist compound_args
+compound_args -> ASSIGN_OP yield_expr
+compound_args -> ASSIGN_OP yield_expr compound_args
+compound_args -> ASSIGN_OP testlist
+compound_args -> ASSIGN_OP testlist compound_args
+flow_stmt -> BREAK
+flow_stmt -> CONTINUE
+flow_stmt -> RETURN
+flow_stmt -> RETURN testlist
+flow_stmt -> yield_expr
+name_stmt -> NAME
+name_stmt -> NAME COMMA name_stmt
+compound_stmt -> cond_stmt
+compound_stmt -> for_stmt
+compound_stmt -> funcdef
+funcdef -> DEF NAME parameters COLON suite
+parameters -> LPAR RPAR
+parameters -> LPAR varargslist RPAR
+varargslist -> fpdef
+varargslist -> fpdef ASSIGN_OP test
+varargslist -> fpdef COMMA varargslist
+varargslist -> fpdef ASSIGN_OP test COMMA varargslist
+fpdef -> NAME
+fpdef -> LPAR fplist RPAR
+fplist -> fpdef
+fplist -> fpdef COMMA fplist
+cond_stmt -> if_stmt
+cond_stmt -> if_stmt elif_stmt
+cond_stmt -> if_stmt elif_stmt else_stmt
+cond_stmt -> if_stmt else_stmt
+cond_stmt -> while_stmt
+if_stmt -> IF test COLON suite
+elif_stmt -> ELIF test  COLON suite
+elif_stmt -> ELIF test COLON suite elif_stmt
+else_stmt -> ELSE COLON suite
+while_stmt -> WHILE test COLON suite
+while_stmt -> WHILE test COLON suite else_stmt
+for_stmt -> FOR exprlist IN testlist COLON suite
+for_stmt -> FOR exprlist IN testlist COLON suite else_stmt
+suite -> simple_stmt
+suite -> NEWLINE INDENT suite_stmt DEDENT
+suite_stmt -> stmt
+suite_stmt -> stmt suite_stmt
+test -> or_test
+test -> or_test IF or_test ELSE test
+or_test -> and_test
+or_test -> and_test OR or_test
+and_test -> not_test
+and_test -> not_test AND and_test
+not_test -> NOT not_test
+not_test -> comparison
+comparison -> arith_expr
+comparison -> arith_expr COMP_OP comparison
+arith_expr -> term
+arith_expr -> term ARITH_OPR arith_expr
+term -> factor
+term -> factor ARITH_OPL term
+factor -> ARITH_OPR factor
+factor -> power
+power -> atom_expr
+power -> atom_expr POW factor
+atom_expr -> atom
+atom_expr -> atom compound_trailer
+atom -> LPAR RPAR
+atom -> LPAR yield_expr RPAR
+atom -> LPAR compound_test RPAR
+atom -> LBKT RBKT
+atom -> LBKT compound_test RBKT
+atom -> NAME
+atom -> NUMBER
+atom -> NONE
+atom -> TRUE
+atom -> FALSE
+compound_test -> test
+compound_test -> test COMMA compound_test
+compound_trailer -> trailer
+compound_trailer -> trailer compound_trailer
+trailer -> LPAR RPAR
+trailer -> LPAR arglist RPAR
+trailer -> LBKT compound_test RBKT
+trailer -> DOT NAME
+exprlist -> arith_expr
+exprlist -> arith_expr COMMA compound_expr
+compound_expr -> arith_expr
+compound_expr -> arith_expr COMMA compound_expr
+testlist -> test
+testlist -> test COMMA compound_test
+arglist -> argument
+arglist -> argument COMMA compound_arg
+compound_arg -> argument
+compound_arg -> argument COMMA compound_arg
+argument -> test
+argument -> test ASSIGN_OP test
+argument -> POW test
+yield_expr -> YIELD
+yield_expr -> YIELD yield_arg
+yield_arg -> FROM test
+yield_arg -> testlist
