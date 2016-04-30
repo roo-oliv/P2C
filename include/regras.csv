@@ -3,12 +3,10 @@ S;NEWLINE
 S;stmt S
 S;NEWLINE S
 stmt;simple_stmt
-stmt;simple_stmt NEWLINE
 stmt;compound_stmt
-stmt;compound_stmt NEWLINE
-simple_stmt;small_stmt
-simple_stmt;small_stmt SEMICOLON simple_stmt
-simple_stmt;small_stmt SEMICOLON
+simple_stmt;small_stmt NEWLINE
+simple_stmt;small_stmt SEMICOLON simple_stmt NEWLINE
+simple_stmt;small_stmt SEMICOLON NEWLINE
 compound_stmt;cond_stmt
 compound_stmt;for_stmt
 compound_stmt;funcdef
@@ -23,9 +21,7 @@ expr_stmt;testlist AUGASSIGN_OP yield_expr
 expr_stmt;testlist AUGASSIGN_OP testlist
 expr_stmt;testlist compound_args
 exprlist;arith_expr
-exprlist;arith_expr COMMA
 exprlist;arith_expr COMMA compound_expr
-exprlist;arith_expr COMMA compound_expr COMMA
 flow_stmt;BREAK
 flow_stmt;CONTINUE
 flow_stmt;RETURN
@@ -34,9 +30,7 @@ flow_stmt;yield_expr
 name_stmt;NAME
 name_stmt;NAME COMMA name_stmt
 testlist;test
-testlist;test COMMA
 testlist;test COMMA compound_test
-testlist;test COMMA compound_test COMMA
 yield_expr;YIELD
 yield_expr;YIELD yield_arg
 compound_args;ASSIGN_OP yield_expr
@@ -56,8 +50,6 @@ parameters;LPAR varargslist RPAR
 suite;simple_stmt
 suite;NEWLINE INDENT suite_stmt DEDENT
 varargslist;fpdef
-varargslist;fpdef COMMA
-varargslist;fpdef ASSIGN_OP test COMMA
 varargslist;fpdef ASSIGN_OP test
 varargslist;fpdef COMMA varargslist
 varargslist;fpdef ASSIGN_OP test COMMA varargslist
@@ -67,8 +59,6 @@ test;or_test
 test;or_test IF or_test ELSE test
 fplist;fpdef
 fplist;fpdef COMMA fplist
-fplist;fpdef COMMA
-fplist;fpdef COMMA fplist COMMA
 if_stmt;IF test COLON suite
 elif_stmt;ELIF test COLON suite
 elif_stmt;ELIF test COLON suite elif_stmt
@@ -109,16 +99,12 @@ compound_trailer;trailer
 compound_trailer;trailer compound_trailer
 compound_test;test
 compound_test;test COMMA compound_test
-compound_test;test COMMA compound_test COMMA
 trailer;LPAR RPAR
 trailer;LPAR arglist RPAR
 trailer;LBKT compound_test RBKT
-trailer;LBKT compound_test COMMA RBKT
 trailer;DOT NAME
 arglist;argument
-arglist;argument COMMA
 arglist;argument COMMA compound_arg
-arglist;argument COMMA compound_arg COMMA
 compound_expr;arith_expr
 compound_expr;arith_expr COMMA compound_expr
 argument;test
