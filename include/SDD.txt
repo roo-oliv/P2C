@@ -1,5 +1,74 @@
+Kinds
+
+    0  : unary operator
+    1  : binary operator
+    2  : assignment operator
+    3  : scope operator
+    4  : flow control
+    5  : delimiter
+    6  : parameter
+    7  : variable
+    8  : function
+    9  : number
+    10 : boolean
+    11 : tuple
+    12 : list
+    13 : indentation
+    14 : none
+    15 : conditional
+    16 : else
+    17 : for
+    18 : def
+    19 : pass
+    20 : pending
+    21 : whole expression
+
+Tokens
+
+	AND .type= .kind=0
+	ARITH_OPL .type= .kind=
+	ARITH_OPR .type= .kind=
+	ASSIGN_OP .type= .kind=
+	AUGASSIGN_OP .type= .kind=
+	BREAK .type= .kind=
+	COLON .type= .kind=
+	COMMA .type= .kind=
+	COMP_OP .type= .kind=
+	CONTINUE .type= .kind=
+	DEDENT .type= .kind=
+	DEF .type= .kind=
+	DEL .type= .kind=
+	DOT .type= .kind=
+	ELIF .type= .kind=
+	ELSE .type= .kind=
+	FALSE .type= .kind=
+	FOR .type= .kind=
+	FROM .type= .kind=
+	GLOBAL .type= .kind=
+	IF .type= .kind=
+	IN .type= .kind=
+	INDENT .type= .kind=
+	LBKT .type= .kind=
+	LPAR .type= .kind=
+	NAME .type= .kind=
+	NEWLINE .type= .kind=
+	NONE .type= .kind=
+	NONLOCAL .type= .kind=
+	NOT .type= .kind=
+	NUMBER .type= .kind=
+	OR .type= .kind=
+	PASS .type= .kind=
+	POW .type= .kind=
+	RBKT .type= .kind=
+	RETURN .type= .kind=
+	RPAR .type= .kind=
+	SEMICOLON .type= .kind=
+	TRUE .type= .kind=
+	WHILE .type= .kind=
+	YIELD .type= .kind=
+
 S -> stmt : S.type = stmt.type : S.kind = stmt.kind : S.content = stmt.content : S.scope = stmt.scope : S.pos = stmt.pos
-S -> NEWLINE : S.type = 
+S -> NEWLINE : S.type =
 S -> stmt S
 S -> NEWLINE S
 stmt -> simple_stmt
