@@ -891,36 +891,5 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                 e = new exception(expression, ss.str());
                 throw *e;
             }
-    /*switch (operatorType) {
-        case -1:
-            return childrenTypes[0]; // PODE DAR ERRO
-        case 38: // '*', '/' and '%''
-            if(childrenTypes.size()!=2) throw std::runtime_error("Invalid number of operands");
-            for(int i=0; i<2; i++)
-                if(!(childrenTypes[i]==28 || childrenTypes[i]==15 || childrenTypes[i]==25))
-                    throw std::runtime_error("Invalid type of operands for operator of type "+operatorType);
-            return 28;
-        case 37: // '+' and '-'
-            if(childrenTypes.size()>2) throw std::runtime_error("Invalid number of operands");
-            if(childrenTypes.size()==1 && !(childrenTypes[0]==28 || childrenTypes[0]==15 || childrenTypes[0]==25))
-                throw std::runtime_error("Invalid type of operand for operator of type"+operatorType);
-            if(!(childrenTypes[0]==18 && childrenTypes[1]==18) ||
-                (!(childrenTypes[0]==28 || childrenTypes[0]==15 || childrenTypes[0]==25) &&
-                !(childrenTypes[1]==28 || childrenTypes[1]==15 || childrenTypes[1]==25)))
-            return childrenTypes[0];
-        case 4: // 'and'
-            break;
-        case 3: // 'or'
-            break;
-        case 5: // 'not'
-            break;
-        case 36: // 'continue'
-            break;
-        case 22: // 'break'
-            break;
-        case 30: // 'return'
-            break;
-        default:
-            break;*/
     }
 }
