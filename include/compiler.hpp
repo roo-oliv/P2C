@@ -23,10 +23,11 @@ namespace compiler {
 
 	class exception: public std::exception {
 	public:
-		exception(std::vector<Token>&, std::string);
+		exception(Node&, std::string);
 		virtual const char* what() const throw();
 	private:
 		std::string message;
+		void formExpression(Node&, std::stringstream&, bool&);
 	};
 
 
@@ -129,5 +130,6 @@ namespace compiler {
 		Token descend(Node*);
 		int getType(Token*);
 		Token concat(std::vector<Token>&);
+		int concat(std::vector<Node*>&);
 	};
 }
