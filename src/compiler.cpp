@@ -580,10 +580,6 @@ int compiler::SyntaxAnalyzer::analyze() {
     la.process();
     Token* t =  la.getList()->readHeading()->next;
 
-    std::vector<std::vector<std::string>> action; // tabela action
-    std::vector<std::vector<std::string>> go; // tabela goto
-    std::vector<std::vector<int>> rules; // tabela de regras. [n][0] = numero de tokens na parte direita da regra, [n][1] = numero da regra pai (index na tabela - chamei de ruleSet)
-
     #ifdef DEBUG
         if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) {
             printf("\n\n%s\n\n", "Loading tables...");
@@ -740,6 +736,10 @@ int compiler::SyntaxAnalyzer::analyze() {
 }
 
 compiler::AST* compiler::SyntaxAnalyzer::getAST() {return &ast;}
+
+std::vector<std::vector<std::string>>* compiler::SyntaxAnalyzer::getActionTable() {return &action;}
+std::vector<std::vector<std::string>>* compiler::SyntaxAnalyzer::getGoToTable() {return &go;}
+std::vector<std::vector<int>>* compiler::SyntaxAnalyzer::getRulesTable() {return &rules;}
 
 compiler::SemanticAnalyzer::SemanticAnalyzer() {}
 
