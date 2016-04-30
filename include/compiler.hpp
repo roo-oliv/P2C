@@ -19,6 +19,8 @@ namespace compiler {
     struct Node;
 	struct Symbol;
 
+	typedef std::unordered_map<std::string, std::vector<Symbol*>> HashTable;
+
 	class TokenList {
     public:
         TokenList();
@@ -64,11 +66,11 @@ namespace compiler {
 	public:
 		SymbolTable();
 		~SymbolTable();
-		std::pair<std::unordered_map<std::string,Symbol*>::iterator,bool> addEntry(Token&, int);
-		void removeEntry(int);
-		std::unordered_map<std::string,Symbol*>::iterator find(std::string);
+		auto addEntry(std::string, int, int, std::pair<int, int>, int, std::string);
+		void removeEntry(std::string, int);
+		auto find(std::string);
 	private:
-		std::unordered_map<std::string,Symbol*> table;
+		HashTable table;
 	};
 
 	class LexycalAnalyzer {

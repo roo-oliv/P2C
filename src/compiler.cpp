@@ -19,7 +19,9 @@ struct compiler::Node {
 };
 
 struct compiler::Symbol {
-    std::vector<std::pair<Token*, int>> tokens;
+    int kind, type, scope;
+    std::pair<int, int> pos; // position = (line, column)
+    std::string name, content;
 };
 
 compiler::TokenList::TokenList() {
@@ -142,16 +144,38 @@ compiler::SymbolTable::SymbolTable() { }
 
 compiler::SymbolTable::~SymbolTable() { }
 
-/*std::pair<std::unordered_map<std::string, compiler::Symbol*>::iterator,bool> compiler::SymbolTable::addEntry(Token &token, int scope) {
-    this.find(token->lexema);
+auto compiler::SymbolTable::addEntry(std::string name, int kind, int type, std::pair<int, int> pos, int scope, std::string content) {
     Symbol *s = new Symbol;
-    s->tokens.emplace_back(&token, scope);
-    return table.insert(s->tokens, s);
+    s->name = name;
+    s->kind = kind;
+    s->type = type;
+    s->pos = pos;
+    s->scope = scope;
+    s->content = content;
+    auto it = table.find(name);
+    if(it==table.end()) {
+        std::vector<Symbol*> v = {s};
+        return table.insert(it, HashTable::value_type(name, v));
+    } else {
+        it->second.push_back(s);
+        return it;
+    }
 }
 
-void compiler::SymbolTable::removeEntry(std::string key) { table.erase(key); }
+void compiler::SymbolTable::removeEntry(std::string name, int scope) {
+    auto it = table.find(name);
+    if(it!=table.end()) {
+        for(auto i = it->second.begin(); i != it->second.end(); ++i) {
+            if((*i)->scope==scope) {
+                it->second.erase(i);
+                break;
+            }
+        }
+        if(it->second.empty()) table.erase(it);
+    }
+}
 
-std::unordered_map<std::string, compiler::Symbol*>::iterator compiler::SymbolTable::find(std::string key) { table.find(key); }*/
+auto compiler::SymbolTable::find(std::string name) { table.find(name); }
 
 compiler::LexycalAnalyzer::LexycalAnalyzer() {
     content = "";
@@ -638,14 +662,18 @@ int compiler::SyntaxAnalyzer::analyze() {
                 nodes.push(parent);
             } else if(action_now == "acc") {
                 ast.setRoot(nodes.top());
-                std::cout << "\n!!!! Entrada aceita !!!!!\n\n";
+                #ifdef DEBUG
+                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==2) && DEBUG_LEVEL>0) {
+                        std::cout << "\nInput is syntatically correct.\n\n";
+                    }
+                #endif
                 break;
             }
         } else {
             if(t->type==33) {
                 t = t->next;
             } else {
-                std::cout << "\n---Erro de sintaxe detectado---\n";
+                std::cout << "\nSyntax error detected.\n";
                 break;
             }
         }
@@ -705,7 +733,7 @@ int compiler::SemanticAnalyzer::analyze() {
     try {
         #ifdef DEBUG
             if(DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) {
-                std::cerr << "\n\n----------Starting semantic analasys----------\n";
+                std::cerr << "\n\nProceeding to semantic analisys\n\n";
             }
         #endif
         Token resultant = descend(root);
@@ -764,7 +792,7 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
             }
         case 3:
             switch (expression[1].type) {
-                case 37:
+                case 37: // '+' or '-'
                     if(expression[1].lexema=="+") {
                         if(expression[0].type==18 && expression[2].type==18)
                             return expression[0];
@@ -778,8 +806,23 @@ compiler::Token compiler::SemanticAnalyzer::concat(std::vector<Token> &expressio
                         else
                             throwSemanticException(expression);
                     }
-                case 38:
+                case 38: // '*', '/' or '%'
+                    if(expression[0].type==18 || expression[1].type==18 || expression[0].type==17 || expression[1].type==17)
+                        throwSemanticException(expression);
                     return expression[0];
+                case 34: // '>', '<', "!=", "==", ">=" or "<="
+                    if(expression[0].type==18 && expression[2].type==18) {
+                        return expression[0];
+                    } else if((expression[0].type!=18 && expression[2].type!=18) && (expression[0].type!=17 && expression[2].type!=17))
+                        return expression[0];
+                    else
+                        throwSemanticException(expression);
+                case 39: // '='
+
+                case 41: // "+=", "-=", "*=", "/=" or "%="
+
+                case 9: // "**"
+
                 default:
                     return expression[2];
             }

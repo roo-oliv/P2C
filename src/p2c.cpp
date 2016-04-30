@@ -1,7 +1,7 @@
 #include <compiler.hpp>
 
 #ifdef DEBUG
-    int DEBUG_LEVEL, DEBUG_SPECIFIER;
+    int DEBUG_LEVEL = 0, DEBUG_SPECIFIER = 0;
 #endif
 
 int main() {
