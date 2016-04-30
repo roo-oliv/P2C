@@ -119,7 +119,7 @@ namespace compiler {
 	private:
 		AST *ast;
 		SymbolTable table;
-		void decorate(AST*);
+		void decorate(Node*);
 		Token descend(Node*);
 		int getType(Token*);
 		Token concat(std::vector<Token>&);
