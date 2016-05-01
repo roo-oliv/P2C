@@ -15,6 +15,7 @@ struct compiler::Node {
     int regra, kind, scope;
     Token *tk;
     std::vector<Node*> children;
+    std::string content = "";
     Node *parent;
 };
 
@@ -43,6 +44,8 @@ void compiler::exception::formExpression(Node &root, std::stringstream &ss, bool
             empty = false;
         }
         ss << root.tk->lexema;
+        if(root.tk->lexema!="[")
+            ss << " ";
     } else {
         for (unsigned i = root.children.size(); i-- > 0; )
             formExpression(*(root.children[i]), ss, empty);
@@ -382,7 +385,11 @@ compiler::TokenList* compiler::LexycalAnalyzer::process() {
                             Indent *i = stack -> pop();
                             if(i->spaces <= dif) {
                                 dif -= i->spaces;
-                                std::cout << i->spaces << std::endl;
+                                #ifdef DEBUG
+                                    if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==1) && DEBUG_LEVEL>1) {
+                                        std::cerr << "Identation spaces: " << i->spaces << std::endl;
+                                    }
+                                #endif
                                 std::stringstream ss;
                                 ss << i->spaces;
                                 content += ss.str();
@@ -784,16 +791,16 @@ int compiler::SemanticAnalyzer::analyze() {
 	}
 }
 
-void compiler::SemanticAnalyzer::decorate(Node *root) {
-    for(auto &i : root->children)
+void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with node kinds and content
+    for(auto &i : root->children)   // Descend tree to decorate children first
         decorate(i);
-    if(root->tk) {
+    if(root->tk) {  // if node has a token it's a leaf node
         #ifdef DEBUG
-            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>2) {
+            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>1) {
                 std::cerr << "decorating leaf node of token: " << root->tk->lexema << std::endl;
             }
         #endif
-        switch (root->tk->type) {
+        switch (root->tk->type) { // map each token type to a node kind
             case 1:
                 root->kind = 2;
                 break;
@@ -918,16 +925,19 @@ void compiler::SemanticAnalyzer::decorate(Node *root) {
                 root->kind = 2;
                 break;
         }
+        root->content += root->tk->lexema; // fill the node content with its token lexema
     } else {
+        for (unsigned i = root->children.size(); i-- > 0; ) // fill the node content with its children contents
+            root->content += root->children[i]->content;
         #ifdef DEBUG
-            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>2) {
+            if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>1 && (root->children.size()>1 || DEBUG_LEVEL>2)) {
                 std::cerr << "decorating node of children: ";
                 for (unsigned i = root->children.size(); i-- > 0; )
-                    std::cerr << root->children[i]->kind << " ";
+                    std::cerr << root->children[i]->content << " ";
                 std::cerr << std::endl;
             }
         #endif
-        switch (root->children.size()) {
+        switch (root->children.size()) { // initial break down of simple expressions up to 3 elements and more complex ones
             case 1:
                 root->kind = root->children[0]->kind;
                 break;
@@ -935,8 +945,12 @@ void compiler::SemanticAnalyzer::decorate(Node *root) {
                 if(root->children[1]->kind==20)
                     root->children[1]->kind = 0;
                 root->kind = concat(root->children);
+                if(root->kind==21)
+                    root->content = "";
                 break;
             case 3:
+                if(root->children[1]->kind==20)
+                    root->children[1]->kind = 0;
                 root->kind = concat(root->children);
                 break;
             default:
@@ -944,11 +958,92 @@ void compiler::SemanticAnalyzer::decorate(Node *root) {
                 break;
         }
     }
+    #ifdef DEBUG
+        if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>1 && (root->tk || (root->children.size()>1 || DEBUG_LEVEL>2))) {
+            std::cerr << "\tdecorated with kind: ";
+            switch (root->kind) {
+                case 0:
+                    std::cerr << "unary operator\n";
+                    break;
+                case 1:
+                    std::cerr << "binary operator\n";
+                    break;
+                case 2:
+                    std::cerr << "assignment operator\n";
+                    break;
+                case 3:
+                    std::cerr << "scope operator\n";
+                    break;
+                case 4:
+                    std::cerr << "flow control\n";
+                    break;
+                case 5:
+                    std::cerr << "delimiter\n";
+                    break;
+                case 6:
+                    std::cerr << "parameter\n";
+                    break;
+                case 7:
+                    std::cerr << "variable\n";
+                    break;
+                case 8:
+                    std::cerr << "function\n";
+                    break;
+                case 9:
+                    std::cerr << "number\n";
+                    break;
+                case 10:
+                    std::cerr << "boolean\n";
+                    break;
+                case 11:
+                    std::cerr << "tuple\n";
+                    break;
+                case 12:
+                    std::cerr << "list\n";
+                    break;
+                case 13:
+                    std::cerr << "indentation\n";
+                    break;
+                case 14:
+                    std::cerr << "none\n";
+                    break;
+                case 15:
+                    std::cerr << "conditional\n";
+                    break;
+                case 16:
+                    std::cerr << "else\n";
+                    break;
+                case 17:
+                    std::cerr << "for\n";
+                    break;
+                case 18:
+                    std::cerr << "def\n";
+                    break;
+                case 19:
+                    std::cerr << "pass\n";
+                    break;
+                case 20:
+                    std::cerr << "pending\n";
+                    break;
+                case 21:
+                    std::cerr << "whole expression\n";
+                    break;
+                default:
+                    std::cerr << "invalid\n";
+                    break;
+            }
+        }
+    #endif
 }
 
 int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
     std::stringstream ss;
     exception *e;
+    #ifdef DEBUG
+        if((DEBUG_SPECIFIER==0 || DEBUG_SPECIFIER==3) && DEBUG_LEVEL>1) {
+            std::cerr << "Concatenating children from node of rule " << expression[0]->parent->regra << std::endl;
+        }
+    #endif
     switch (expression.size()) {
         case 2:
             switch(expression[0]->kind) {
@@ -970,6 +1065,10 @@ int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
                     ss << "UnknownError: Semantic Analyzer received an unexpected expression";
                     e = new exception(*(expression[0]->parent), ss.str());
                     throw *e;
+                case 13:
+                    return 21;
+                case 21:
+                    return expression[1]->kind;
                 default:
                     ss << "TypeError: bad operand type for unary " << expression[1]->tk->lexema << ": ";
                     switch(expression[0]->kind) {
@@ -1002,6 +1101,9 @@ int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
                         throw *e;
                 }
             }
+            /*switch (expression) {
+                case :
+            }*/
             return -1;
         default:
             return -1;
