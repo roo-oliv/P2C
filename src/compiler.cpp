@@ -485,6 +485,11 @@ compiler::TokenList* compiler::LexycalAnalyzer::process() {
             }
         }
     }
+    //newline final
+    content = "\\n";
+    column++;
+    createToken(33);
+    space = 0;
     if( space < stack->getSize() ) {
         int dif = stack->getSize() - space;
         while(dif) {
