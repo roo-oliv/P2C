@@ -23,10 +23,11 @@ namespace compiler {
 
 	class exception: public std::exception {
 	public:
-		exception(std::vector<Token>&, std::string);
+		exception(Node&, std::string);
 		virtual const char* what() const throw();
 	private:
 		std::string message;
+		void formExpression(Node&, std::stringstream&, bool&);
 	};
 
 
@@ -107,7 +108,13 @@ namespace compiler {
         int fillTable(std::vector<std::vector<int>>&, std::string);
 		AST* getAST();
         int analyze();
+		std::vector<std::vector<std::string>>* getActionTable();
+		std::vector<std::vector<std::string>>* getGoToTable();
+		std::vector<std::vector<int>>* getRulesTable();
     private:
+		std::vector<std::vector<std::string>> action; // tabela action
+	    std::vector<std::vector<std::string>> go; // tabela goto
+	    std::vector<std::vector<int>> rules; // tabela de regras. [n][0] = numero de tokens na parte direita da regra, [n][1] = numero da regra pai (index na tabela - chamei de ruleSet)
 		AST ast;
     };
 
@@ -123,5 +130,6 @@ namespace compiler {
 		Token descend(Node*);
 		int getType(Token*);
 		Token concat(std::vector<Token>&);
+		int concat(std::vector<Node*>&);
 	};
 }
