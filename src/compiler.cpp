@@ -947,15 +947,15 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
                 root->kind = root->children[0]->kind;
                 break;
             case 2:
-                if(root->children[1]->kind==20)
-                    root->children[1]->kind = 0;
+                if(root->children[1]->kind==20) // can only be a '+' or a '-', pending for unary or binary operator attribution
+                    root->children[1]->kind = 0;  // in this case (root->children.size()==2) there is only one operand, so it will be an unary operator
                 root->kind = concat(root->children);
-                if(root->kind==21)
-                    root->content = "";
+                if(root->kind==21) // in this case the node corresponds for a whole expression and won't concatenate with others anymore
+                    root->content = ""; // it's content is cleared
                 break;
             case 3:
-                if(root->children[1]->kind==20)
-                    root->children[1]->kind = 0;
+                if(root->children[1]->kind==20) // can only be a '+' or a '-', pending for unary or binary operator attribution
+                    root->children[1]->kind = 1; // in this case (root->children.size()==3) there is two operands, so it will be a binary operator
                 root->kind = concat(root->children);
                 break;
             default:
@@ -1049,7 +1049,7 @@ int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
             std::cerr << "Concatenating children from node of rule " << expression[0]->parent->regra << std::endl;
         }
     #endif
-    switch (expression.size()) {
+    switch (expression.size()) { // concatenation is currently based on the number of elements to concatenate and manually predicting all cases, should be substituted for the use of grammar rules
         case 2:
             switch(expression[0]->kind) {
                 case 7: case 8: case 9: case 10:
