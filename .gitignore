@@ -28,4 +28,7 @@
 *.app
 
 # Makefile options tmp file
-*.opt~
+*.opt
+
+# Temporary files
+*~

@@ -15,7 +15,7 @@ EXEFILE = P2C.exe
 V ?= @
 
 # Make options
-all : debug_none_update $(EXEFILE)
+all : check_files debug_none_update $(EXEFILE)
 
 debug : LEXFLAGS += -DDEBUG
 debug : SYNFLAGS += -DDEBUG
@@ -28,13 +28,20 @@ debug_syntax : SYNFLAGS += -DDEBUG
 debug_semantic : SEMFLAGS += -DDEBUG
 debug_translator : TRAFLAGS += -DDEBUG
 
-debug : debug_update $(EXEFILE)
-debug_lexycal : debug_lexycal_update $(EXEFILE)
-debug_syntax : debug_semantic_update $(EXEFILE)
-debug_semantic : debug_semantic_update $(EXEFILE)
-debug_translator : debug_translator_update $(EXEFILE)
+debug : check_files debug_update $(EXEFILE)
+debug_lexycal : check_files debug_lexycal_update $(EXEFILE)
+debug_syntax : check_files debug_semantic_update $(EXEFILE)
+debug_semantic : check_files debug_semantic_update $(EXEFILE)
+debug_translator : check_files debug_translator_update $(EXEFILE)
 
 # Debugging options updating commands
+check_files :
+	$(V) if [ ! -f .debug.opt ]; then echo "0" > .debug.opt; fi
+	$(V) if [ ! -f .debug_lexycal.opt ]; then echo "0" > .debug_lexycal.opt; fi
+	$(V) if [ ! -f .debug_syntax.opt ]; then echo "0" > .debug_syntax.opt; fi
+	$(V) if [ ! -f .debug_semantic.opt ]; then echo "0" > .debug_semantic.opt; fi
+	$(V) if [ ! -f .debug_translator.opt ]; then echo "0" > .debug_translator.opt; fi
+
 debug_update :
 	$(V) if [ `cat .debug.opt` = 0 ]; then echo "1" > .debug.opt; fi
 	$(V) if [ `cat .debug_lexycal.opt` = 0 ]; then echo "1" > .debug_lexycal.opt; fi
@@ -103,4 +110,4 @@ p2c.o : datastructures.o exception.o lexycal.o syntax.o semantic.o translator.o 
 	$(CXX) $(P2CFLAGS) p2c.cpp
 
 clean:
-	rm -f *.o *~ core $(INCLUDE)/*~ *.exe *.opt
+	rm -f *.o *~ core $(INCLUDE)/*~ *.exe .[!.]*.opt
