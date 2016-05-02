@@ -8,11 +8,13 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
     Node *root = ast->getRoot();
     std::stringstream ss;
     exception *e;
+
     try {
         #ifdef DEBUG
             std::cerr << "\n\n---------SEMANTIC ANALYZER---------\n\n";
         #endif
         decorate(root);
+        fillTable(root);
         /*Token resultant = descend(root);
         if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
             std::vector<Token> expression = {resultant};
@@ -25,6 +27,19 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
         return 1;
 	}
 }
+
+void compiler::SemanticAnalyzer::fillTable(Node *root) {
+   if(root->children.size() <= 0){
+      return;
+   }
+   for(auto &i : root->children)
+       fillTable(i);
+       std::cerr << root->kind << std::endl;
+
+
+}
+
+compiler::SymbolTable* compiler::SemanticAnalyzer::getSymbolTable() {return &table;}
 
 void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with node kinds and content
     for(auto &i : root->children)   // Descend tree to decorate children first
@@ -143,10 +158,10 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
                 root->kind = 4;
                 break;
             case 37:
-                root->kind = 20; /*!!!!!!*/
+                root->kind = 1;
                 break;
             case 38:
-                root->kind = 1;
+                root->kind = 22;
                 break;
             case 39:
                 root->kind = 2;
@@ -268,6 +283,7 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
 int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
     std::stringstream ss;
     exception *e;
+    SymbolTable table;
     #ifdef DEBUG
         std::cerr << "Concatenating children from node of rule " << expression[0]->parent->regra << std::endl;
     #endif
@@ -328,6 +344,38 @@ int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
                         throw *e;
                 }
             }
+            if(expression[0]->kind == expression[2]->kind){
+              if(expression[0]->kind == 9){
+                switch (expression[1]->kind) {
+                  case 1: case 22:
+                  return 9;
+                  case 5:
+                  return 20;
+                }
+              }
+              if(expression[0]->kind == 12){
+                switch (expression[1]->kind) {
+                  case 1:
+                  return 12;
+                  case 22:
+                  return -100;//ERRO MULTIPLICAÇÃO DE LISTAS
+                  case 5:
+                  return 20;
+                }
+              }
+            }
+            else{
+              if(expression[0]->kind == 9 || expression[0]->kind == 12){
+                if(expression[2]->kind == 20 && expression[1]->kind == 5){
+                  return 20;
+                }
+                else{
+                  std::cerr << "\nDEU ERRO\n";
+                  //ERRO: OPERAÇÃO DE NUMBER E LISTAS COM OUTRAS COISAS
+                }
+              }
+            }
+
             /*switch (expression) {
                 case :
             }*/
