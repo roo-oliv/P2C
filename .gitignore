@@ -27,6 +27,5 @@
 *.out
 *.app
 
-# Makefile options
-*.opt
+# Makefile options tmp file
 *.opt~
