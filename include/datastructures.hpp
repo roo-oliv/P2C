@@ -34,6 +34,7 @@ namespace compiler {
         std::vector<Node*> children;
         std::string content = "";
         Node *parent;
+        std::string getKindName();
     };
 
     struct Symbol {

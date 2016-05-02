@@ -1,5 +1,56 @@
 #include "datastructures.hpp"
 
+std::string compiler::Node::getKindName() {
+    switch (kind) {
+        case 0 :
+            return "unary operator";
+        case 1 :
+            return "binary operator";
+        case 2 :
+            return "assignment operator";
+        case 3 :
+            return "scope operator";
+        case 4 :
+            return "flow control";
+        case 5 :
+            return "delimiter";
+        case 6 :
+            return "parameter";
+        case 7 :
+            return "variable";
+        case 8 :
+            return "function";
+        case 9 :
+            return "Number";
+        case 10 :
+            return "BooleanType";
+        case 11 :
+            return "PyTupleObject";
+        case 12 :
+            return "PyListObject";
+        case 13 :
+            return "indentation";
+        case 14 :
+            return "NoneType";
+        case 15 :
+            return "conditional";
+        case 16 :
+            return "else";
+        case 17 :
+            return "for";
+        case 18 :
+            return "def";
+        case 19 :
+            return "pass";
+        case 20 :
+            return "pending";
+        case 21 :
+            return "whole expression";
+        default :
+            return "invalid kind";
+    }
+}
+
 compiler::TokenList::TokenList() {
     heading = new Token;
     trailing = heading;

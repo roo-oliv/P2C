@@ -29,13 +29,15 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
 }
 
 void compiler::SemanticAnalyzer::fillTable(Node *root) {
-   if(root->children.size() <= 0){
-      return;
-   }
-   for(auto &i : root->children)
-       fillTable(i);
-       std::cerr << root->kind << std::endl;
+    if(root->children.size() <= 0){
+        return;
+    }
+    for(auto &i : root->children)
+        fillTable(i);
 
+    /*#ifdef DEBUG
+        std::cerr << root->kind << std::endl;
+    #endif*/
 
 }
 
@@ -158,10 +160,10 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
                 root->kind = 4;
                 break;
             case 37:
-                root->kind = 1;
+                root->kind = 20;
                 break;
             case 38:
-                root->kind = 22;
+                root->kind = 1;
                 break;
             case 39:
                 root->kind = 2;
@@ -178,12 +180,13 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
         for (unsigned i = root->children.size(); i-- > 0; ) // fill the node content with its children contents
             root->content += root->children[i]->content;
         #ifdef DEBUG
-            std::cerr << "decorating node of children: ";
+            std::cerr << "\nDecorating node of children: ";
             for (unsigned i = root->children.size(); i-- > 0; )
                 std::cerr << root->children[i]->content << " ";
             std::cerr << std::endl;
         #endif
-        switch (root->children.size()) { // initial break down of simple expressions up to 3 elements and more complex ones
+        root->kind = concat(root->regra, root->children);
+        /*switch (root->children.size()) { // initial break down of simple expressions up to 3 elements and more complex ones
             case 1:
                 root->kind = root->children[0]->kind;
                 break;
@@ -202,92 +205,68 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
             default:
                 root->kind = concat(root->children);
                 break;
-        }
+        }*/
     }
     #ifdef DEBUG
-        std::cerr << "\tdecorated with kind: ";
-        switch (root->kind) {
-            case 0:
-                std::cerr << "unary operator\n";
-                break;
-            case 1:
-                std::cerr << "binary operator\n";
-                break;
-            case 2:
-                std::cerr << "assignment operator\n";
-                break;
-            case 3:
-                std::cerr << "scope operator\n";
-                break;
-            case 4:
-                std::cerr << "flow control\n";
-                break;
-            case 5:
-                std::cerr << "delimiter\n";
-                break;
-            case 6:
-                std::cerr << "parameter\n";
-                break;
-            case 7:
-                std::cerr << "variable\n";
-                break;
-            case 8:
-                std::cerr << "function\n";
-                break;
-            case 9:
-                std::cerr << "number\n";
-                break;
-            case 10:
-                std::cerr << "boolean\n";
-                break;
-            case 11:
-                std::cerr << "tuple\n";
-                break;
-            case 12:
-                std::cerr << "list\n";
-                break;
-            case 13:
-                std::cerr << "indentation\n";
-                break;
-            case 14:
-                std::cerr << "none\n";
-                break;
-            case 15:
-                std::cerr << "conditional\n";
-                break;
-            case 16:
-                std::cerr << "else\n";
-                break;
-            case 17:
-                std::cerr << "for\n";
-                break;
-            case 18:
-                std::cerr << "def\n";
-                break;
-            case 19:
-                std::cerr << "pass\n";
-                break;
-            case 20:
-                std::cerr << "pending\n";
-                break;
-            case 21:
-                std::cerr << "whole expression\n";
-                break;
-            default:
-                std::cerr << "invalid\n";
-                break;
-        }
+        std::cerr << "\tdecorated with kind: " << root->getKindName() << std::endl;
     #endif
 }
 
-int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
+int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression) {
     std::stringstream ss;
     exception *e;
     SymbolTable table;
     #ifdef DEBUG
-        std::cerr << "Concatenating children from node of rule " << expression[0]->parent->regra << std::endl;
+        std::cerr << "\tConcatenating children from node of rule " << expression[0]->parent->regra << std::endl;
     #endif
-    switch (expression.size()) { // concatenation is currently based on the number of elements to concatenate and manually predicting all cases, should be substituted for the use of grammar rules
+    switch (rule) {
+        case 78: // $ + $ | $ - $
+            expression[1]->kind = 1; // resolving pending kind to BINARY_OPERATOR
+            if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
+               (expression[0]->kind==14 || expression[2]->kind==14) || // Can't handle none types
+               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind!=expression[2]->kind || expression[1]->tk->lexema!="+"))) // Can only handle LIST + LIST
+            {
+                ss << "TypeError: unsupported operand type(s) for " << expression[1]->tk->lexema << ": \'" << expression[0]->getKindName() << "\' and \'" << expression[2]->getKindName() << "\'";
+                e = new exception(*(expression[0]->parent), ss.str());
+                throw *e;
+            } else {
+                if(expression[0]->kind!=12)
+                    return 9; // return NUMBER kind
+                else
+                    return 12; // return LIST kind
+            }
+        case 80: // $ * $ | $ / $ | $ % $
+            if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
+               (expression[0]->kind==14 || expression[2]->kind==14) || // Can't handle none types
+               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind==expression[2]->kind || expression[1]->tk->lexema!="*"))) // Can only handle one operand LIST and the operator must be '*'
+            {
+                ss << "TypeError: unsupported operand type(s) for " << expression[1]->tk->lexema << ": \'" << expression[0]->getKindName() << "\' and \'" << expression[2]->getKindName() << "\'";
+                e = new exception(*(expression[0]->parent), ss.str());
+                throw *e;
+            } else {
+                if(expression[0]->kind!=12 && expression[2]->kind!=12)
+                    return 9; // return NUMBER kind
+                else
+                    return 12; // return LIST kind
+            }
+        case 81: // UNARY_OPERATOR $
+            expression[1]->kind = 0; // resolving pending kind to UNARY_OPERATOR
+            switch (expression[0]->kind) {
+                case 7: case 8: case 9: case 10: case 20:
+                    return expression[0]->kind; // return ELEMENT kind
+                default:
+                    ss << "TypeError: bad operand type for unary " << expression[1]->tk->lexema << ": \'" << expression[0]->getKindName() << "\'";
+                    e = new exception(*(expression[0]->parent), ss.str());
+                    throw *e;
+            }
+        case 87: case 89: // () : ($)
+            return 11; // return TUPLE kind
+        case 90: case 91: // [] : [$]
+            return 12; // return LIST kind
+        default:
+            return expression[0]->kind;
+    }
+    /*switch (expression.size()) { // concatenation is currently based on the number of elements to concatenate and manually predicting all cases, should be substituted for the use of grammar rules
         case 2:
             switch(expression[0]->kind) {
                 case 7: case 8: case 9: case 10:
@@ -376,11 +355,8 @@ int compiler::SemanticAnalyzer::concat(std::vector<Node*> &expression) {
               }
             }
 
-            /*switch (expression) {
-                case :
-            }*/
             return -1;
         default:
             return -1;
-    }
+    }*/
 }
