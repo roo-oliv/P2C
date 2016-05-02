@@ -9,16 +9,20 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include "datastructures.hpp"
 #include "exception.hpp"
 
 namespace compiler {
     class Translator {
     public:
-        Translator();
+        Translator(AST*, SymbolTable*);
         ~Translator();
+        void translate();
     private:
-
+        void descend(Node*, std::fstream*);
+        AST *ast;
+        SymbolTable *table;
     };
 }
 
