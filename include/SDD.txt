@@ -22,6 +22,7 @@ Kinds
     19 : pass
     20 : pending
     21 : whole expression
+    22 : variables tuple
 
 Tokens
 

@@ -180,7 +180,7 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
         for (unsigned i = root->children.size(); i-- > 0; ) // fill the node content with its children contents
             root->content += root->children[i]->content;
         #ifdef DEBUG
-            std::cerr << "\nDecorating node of children: ";
+            std::cerr << "Decorating node of children: ";
             for (unsigned i = root->children.size(); i-- > 0; )
                 std::cerr << root->children[i]->content << " ";
             std::cerr << std::endl;
@@ -208,7 +208,7 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
         }*/
     }
     #ifdef DEBUG
-        std::cerr << "\tdecorated with kind: " << root->getKindName() << std::endl;
+        std::cerr << "\tdecorated with kind: " << root->getKindName() << "\n\n";
     #endif
 }
 
@@ -222,13 +222,18 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
     switch (rule) {
         case 21: // $ $(= $)
             if(expression[1]->kind==20) expression[1]->kind=7; // resolving pending kind to VARIABLE
-            if(expression[1]->kind==7) return 21; // return WHOLE_EXPRESSION kind
+            if((expression[1]->kind==7) || (expression[1]->kind==22 && (expression[0]->kind==11 || expression[0]->kind==12 || expression[0]->kind==20 || expression[0]->kind==7 || expression[0]->kind==8))) return 21; // return WHOLE_EXPRESSION kind
+            if(expression[1]->kind==22) {
+                ss << "TypeError: \'" << expression[0]->getKindName() << "\' is not iterable";
+                e = new exception(*(expression[0]->parent), ss.str());
+                throw *e;
+            }
             ss << "SyntaxError: can't assign to literal";
             e = new exception(*(expression[0]->parent), ss.str());
             throw *e;
         case 32: case 100: // $ , $
-            if(expression[0]->kind==20 && expression[2]->kind==20)
-                return 20; // return PENDING kind
+            if((expression[0]->kind==20 || expression[0]->kind==22) && (expression[2]->kind==20 || expression[2]->kind==22)) // if both elements have PENDING or VARIABLES_TUPLE kind they may be suitable for a VARIABLES_TUPLE kind rather than TUPLE
+                return 22; // return VARIABLES_TUPLE kind
             return 11; // return TUPLE kind
         case 78: // $ + $ | $ - $
             expression[1]->kind = 1; // resolving pending kind to BINARY_OPERATOR
@@ -272,11 +277,9 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
         case 87: // ()
             return 11; // return TUPLE kind
         case 89: // ($)
-            if(expression[1]->kind==20) { // if contents of tuple are all pending
-                expression[1]->kind = 7;
-                return 7;
-            }
-            return 11;
+            if(expression[1]->kind==20) expression[1]->kind = 22; // if contents of tuple are all of PENDING kind then resolve to VARIABLES_TUPLE kind
+            if(expression[1]->kind==22) return 22; // return VARIABLES_TUPLE kind
+            return 11; // return TUPLE
         case 90: case 91: // [] : [$]
             return 12; // return LIST kind
         default:

@@ -46,6 +46,8 @@ std::string compiler::Node::getKindName() {
             return "pending";
         case 21 :
             return "whole expression";
+        case 22 :
+            return "variables tuple";
         default :
             return "invalid kind";
     }
