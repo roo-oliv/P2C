@@ -239,6 +239,7 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
             return 11; // return TUPLE kind
         case 46: // def $ $ : \n
             expression[3]->kind = 8;
+            return 21;
         case 48: case 47: case 87: case 89:
             if(expression[1]->kind==20) expression[1]->kind = 22; // if contents of tuple are all of PENDING kind then resolve to VARIABLES_TUPLE kind
             if(expression[1]->kind==22) return 22; // return VARIABLES_TUPLE kind
