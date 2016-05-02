@@ -20,9 +20,11 @@ namespace compiler {
 		SemanticAnalyzer();
 		~SemanticAnalyzer();
 		int analyze(AST*);
+    SymbolTable* getSymbolTable();
 	private:
 		SymbolTable table;
 		void decorate(Node*);
+    void fillTable(Node*);
 		Token descend(Node*);
 		int getType(Token*);
 		Token concat(std::vector<Token>&);
