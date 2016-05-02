@@ -251,10 +251,10 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
                     return expression[0]->kind; // return LIST or TUPLE kind
             }
         case 80: // $ * $ | $ / $ | $ % $
-            if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
-               (expression[0]->kind==14 || expression[2]->kind==14) || // Can't handle none types
-               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind==expression[2]->kind || expression[1]->tk->lexema!="*"))) // Can only handle one operand LIST and the operator must be '*'
-            {
+            if((expression[0]->kind==14 || expression[2]->kind==14) || // Can't handle none types
+               ((expression[0]->kind==11 || expression[2]->kind==11) && (expression[0]->kind==expression[2]->kind || expression[1]->tk->lexema!="*")) || // Can only handle one operand TUPLE and the operator must be '*'
+               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind==expression[2]->kind || expression[1]->tk->lexema!="*")) // Can only handle one operand LIST and the operator must be '*'
+            ) {
                 ss << "TypeError: unsupported operand type(s) for " << expression[1]->tk->lexema << ": \'" << expression[0]->getKindName() << "\' and \'" << expression[2]->getKindName() << "\'";
                 e = new exception(*(expression[0]->parent), ss.str());
                 throw *e;
