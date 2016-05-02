@@ -221,7 +221,7 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
     #endif
     switch (rule) {
         case 21: // $ $(= $)
-            if(expression[1]->kind==20) expression[1]->kind==7; // resolving pending kind to VARIABLE
+            if(expression[1]->kind==20) expression[1]->kind=7; // resolving pending kind to VARIABLE
             if(expression[1]->kind==7) return 21; // return WHOLE_EXPRESSION kind
             ss << "SyntaxError: can't assign to literal";
             e = new exception(*(expression[0]->parent), ss.str());
