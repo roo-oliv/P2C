@@ -30,7 +30,7 @@ debug_translator : TRAFLAGS += -DDEBUG
 
 debug : check_files debug_update $(EXEFILE)
 debug_lexycal : check_files debug_lexycal_update $(EXEFILE)
-debug_syntax : check_files debug_semantic_update $(EXEFILE)
+debug_syntax : check_files debug_syntax_update $(EXEFILE)
 debug_semantic : check_files debug_semantic_update $(EXEFILE)
 debug_translator : check_files debug_translator_update $(EXEFILE)
 
