@@ -220,12 +220,22 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
         std::cerr << "\tConcatenating children from node of rule " << expression[0]->parent->regra << std::endl;
     #endif
     switch (rule) {
+        case 21: // $ $(= $)
+            if(expression[1]->kind==20) expression[1]->kind==7; // resolving pending kind to VARIABLE
+            if(expression[1]->kind==7) return 21; // return WHOLE_EXPRESSION kind
+            ss << "SyntaxError: can't assign to literal";
+            e = new exception(*(expression[0]->parent), ss.str());
+            throw *e;
+        case 32: case 100: // $ , $
+            if(expression[0]->kind==20 && expression[2]->kind==20)
+                return 20; // return PENDING kind
+            return 11; // return TUPLE kind
         case 78: // $ + $ | $ - $
             expression[1]->kind = 1; // resolving pending kind to BINARY_OPERATOR
             if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
-               (expression[0]->kind==14 || expression[2]->kind==14) || // Can't handle none types
-               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind!=expression[2]->kind || expression[1]->tk->lexema!="+"))) // Can only handle LIST + LIST
-            {
+               ((expression[0]->kind==14 || expression[2]->kind==14) && (expression[0]->kind!=expression[2]->kind || expression[1]->tk->lexema!="+")) || // // Can only handle TUPLE + TUPLE
+               ((expression[0]->kind==12 || expression[2]->kind==12) && (expression[0]->kind!=expression[2]->kind || expression[1]->tk->lexema!="+")) // Can only handle LIST + LIST
+              ) {
                 ss << "TypeError: unsupported operand type(s) for " << expression[1]->tk->lexema << ": \'" << expression[0]->getKindName() << "\' and \'" << expression[2]->getKindName() << "\'";
                 e = new exception(*(expression[0]->parent), ss.str());
                 throw *e;
@@ -233,7 +243,7 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
                 if(expression[0]->kind!=12)
                     return 9; // return NUMBER kind
                 else
-                    return 12; // return LIST kind
+                    return expression[0]->kind; // return LIST or TUPLE kind
             }
         case 80: // $ * $ | $ / $ | $ % $
             if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
@@ -249,7 +259,7 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
                 else
                     return 12; // return LIST kind
             }
-        case 81: // UNARY_OPERATOR $
+        case 81: // + $ | - $
             expression[1]->kind = 0; // resolving pending kind to UNARY_OPERATOR
             switch (expression[0]->kind) {
                 case 7: case 8: case 9: case 10: case 20:
@@ -259,104 +269,17 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
                     e = new exception(*(expression[0]->parent), ss.str());
                     throw *e;
             }
-        case 87: case 89: // () : ($)
+        case 87: // ()
             return 11; // return TUPLE kind
+        case 89: // ($)
+            if(expression[1]->kind==20) { // if contents of tuple are all pending
+                expression[1]->kind = 7;
+                return 7;
+            }
+            return 11;
         case 90: case 91: // [] : [$]
             return 12; // return LIST kind
         default:
             return expression[0]->kind;
     }
-    /*switch (expression.size()) { // concatenation is currently based on the number of elements to concatenate and manually predicting all cases, should be substituted for the use of grammar rules
-        case 2:
-            switch(expression[0]->kind) {
-                case 7: case 8: case 9: case 10:
-                    return expression[0]->kind;
-                case 5:
-                    if(expression[1]->kind==5) {
-                        switch (expression[0]->tk->type) {
-                            case 13:
-                                return 11;
-                            case 14:
-                                return 12;
-                            default:
-                                ss << "UnknownError: Semantic Analyzer received an unexpected expression";
-                                e = new exception(*(expression[0]->parent), ss.str());
-                                throw *e;
-                        }
-                    }
-                    ss << "UnknownError: Semantic Analyzer received an unexpected expression";
-                    e = new exception(*(expression[0]->parent), ss.str());
-                    throw *e;
-                case 13:
-                    return 21;
-                case 21:
-                    return expression[1]->kind;
-                default:
-                    ss << "TypeError: bad operand type for unary " << expression[1]->tk->lexema << ": ";
-                    switch(expression[0]->kind) {
-                        case 11:
-                            ss << "\'PyTupleObject\'";
-                            break;
-                        case 12:
-                            ss << "\'PyListObject\'";
-                            break;
-                        case 14:
-                            ss << "\'NoneType\'";
-                            break;
-                        default:
-                            ss << "UnknownError: Semantic Analyzer received an unexpected expression";
-                            break;
-                    }
-                    e = new exception(*(expression[0]->parent), ss.str());
-                    throw *e;
-            }
-        case 3:
-            if(expression[0]->kind==5) {
-                switch (expression[0]->tk->type) {
-                    case 13:
-                        return expression[1]->kind;
-                    case 14:
-                        return 12;
-                    default:
-                        ss << "UnknownError: Semantic Analyzer received an unexpected expression";
-                        e = new exception(*(expression[0]->parent), ss.str());
-                        throw *e;
-                }
-            }
-            if(expression[0]->kind == expression[2]->kind){
-              if(expression[0]->kind == 9){
-                switch (expression[1]->kind) {
-                  case 1: case 22:
-                  return 9;
-                  case 5:
-                  return 20;
-                }
-              }
-              if(expression[0]->kind == 12){
-                switch (expression[1]->kind) {
-                  case 1:
-                  return 12;
-                  case 22:
-                  return -100;//ERRO MULTIPLICAÇÃO DE LISTAS
-                  case 5:
-                  return 20;
-                }
-              }
-            }
-            else{
-              if(expression[0]->kind == 9 || expression[0]->kind == 12){
-                if(expression[2]->kind == 20 && expression[1]->kind == 5){
-                  return 20;
-                }
-                else{
-                  std::cerr << "\nDEU ERRO\n";
-                  //ERRO: OPERAÇÃO DE NUMBER E LISTAS COM OUTRAS COISAS
-                }
-              }
-            }
-
-            return -1;
-        default:
-            return -1;
-    }*/
 }

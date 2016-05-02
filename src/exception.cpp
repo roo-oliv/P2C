@@ -18,9 +18,7 @@ void compiler::exception::formExpression(Node &root, std::stringstream &ss, bool
             ss << "Error found in expression at line " << root.tk->lin << ", column " << root.tk->col << ":\n ... ";
             empty = false;
         }
-        ss << root.tk->lexema;
-        if(root.tk->lexema!="[")
-            ss << " ";
+        ss << root.tk->lexema << " ";
     } else {
         for (unsigned i = root.children.size(); i-- > 0; )
             formExpression(*(root.children[i]), ss, empty);
