@@ -17,8 +17,10 @@ int main() {
     compiler::AST *ast = syntax.getAST();
     compiler::SemanticAnalyzer semantic;
     semantic.analyze(ast);
-    //compiler::SymbolTable *table = semantic.getSymbolTable();
-    //table->insert("x", 7, 0, 0, 0);
+    compiler::SymbolTable *table = semantic.getSymbolTable();
+    table->insert("x", 7, 0, 0, 0);
+    table->insert("a", 6, 0, 0, 0);
+    table->insert("b", 6, 0, 0, 0);
     compiler::Translator translator(ast, semantic.getSymbolTable());
     translator.translate();
     return 0;

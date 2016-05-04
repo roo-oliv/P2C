@@ -10,8 +10,11 @@ compiler::Translator::~Translator() { }
 void compiler::Translator::translate() {
     Node *root = ast->getRoot();
     std::ofstream fs("output.cpp");
-    fs << "#include <iostream>\n\n"
-        << "int main() {\n";
+    fs << "#include <iostream>\n"
+        << "#include \"pybuiltins.hpp\"\n"
+        << "\n#define a" << table->lookup("print")->second[0] << "(arg) print(arg)\n"
+        << "#define a" << table->lookup("abs")->second[0] << "(arg) abs(arg)\n"
+        << "\nint main() {\n";
     #ifdef DEBUG
         std:cerr << "\n\n----------TRANSLATOR----------\n\n");
     #endif
@@ -21,12 +24,12 @@ void compiler::Translator::translate() {
 }
 
 void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
-    std::vector<Node*> v;
+    std::vector<Node*> *v;
     switch (r->regra) {
         case -1:
             switch (r->tk->type) {
                 case 11:
-                    fs << "a" << table->lookup(r->content)->second[/*v.back()->scope*/0];
+                    fs << "a" << table->lookup(r->content)->second[/*v->back()->scope*/0];
                     break;
                 case 29: case 31: case 33:
                     break;
@@ -44,16 +47,20 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             descend(r->children.at(1), fs, tabs);
             break;
         case 13:
-            fetchChildren(r->children.at(0), v);
+            v = AST::fetchLeaves(r->children.at(0));
             for(int i=0; i<tabs; i++) fs << "\t";
-            if(v.size()==1)
-                fs << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << ".clear()";
+            if(v->size()==1)
+                fs << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << ".clear()";
             else
-                fs << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << ".erase("
-                    << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << ".begin()+"
-                    << v.at(1)->content << ")";
+                fs << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << ".erase("
+                    << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << ".begin()+"
+                    << v->at(1)->content << ")";
             break;
         case 14:
+            break;
+        case 15:
+            for(int i=0; i<tabs; i++) fs << "\t";
+            descend(r->children.back(), fs, tabs);
             break;
         case 17:
             break;
@@ -61,59 +68,60 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             /*???*/
             break;
         case 20:
-            fetchChildren(r->children.back(), v);
+            v = AST::fetchLeaves(r->children.back());
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << " "
+            fs << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << " "
                 << r->children.at(1)->content << " ";
             descend(r->children.at(0), fs, tabs);
             break;
         case 21:
-            fetchChildren(r->children.back(), v);
+            v = AST::fetchLeaves(r->children.back());
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "auto a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << " ";
+            fs << "auto a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << " ";
             descend(r->children.at(0), fs, tabs);
             break;
         case 44:
-            fetchChildren(r->children.at(2), v);
+            v = AST::fetchLeaves(r->children.at(2));
             table->insert("__cmpvar__", 7, r->children.back()->tk->lin, r->children.back()->tk->col, 0);
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "auto " << "a" << table->lookup("__cmpvar__")->second[/*v.back()->scope*/0] << " = ";
-            if(v.size()>1) {
+            fs << "auto " << "a" << table->lookup("__cmpvar__")->second[/*v->back()->scope*/0] << " = ";
+            if(v->size()>1) {
                 fs << "{";
-                for (unsigned i = v.size()-1; i-- > 1; ) fs << v.at(i)->content;
-                for(int i=0; i<tabs; i++) fs << "\t";
+                for (unsigned i = v->size()-1; i-- > 1; ) fs << v->at(i)->content;
                 fs << "};\n";
             } else {
-                for(int i=0; i<tabs; i++) fs << "\t";
-                fs << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0] << ";\n";
+                fs << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0] << ";\n";
             }
-            v.clear();
-            fetchChildren(r->children.at(4), v);
+            v->clear();
+            v = AST::fetchLeaves(r->children.at(4));
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "for (auto " << "a" << table->lookup(v.back()->content)->second[/*v.back()->scope*/0]
-                << " : a" << table->lookup("__cmpvar__")->second[/*v.back()->scope*/0] << ")";
+            fs << "for (auto " << "a" << table->lookup(v->back()->content)->second[/*v->back()->scope*/0]
+                << " : a" << table->lookup("__cmpvar__")->second[/*v->back()->scope*/0] << ")";
             descend(r->children.at(0), fs, tabs);
+            fs << "\n";
             break;
         case 45:
             break;
         case 46:
-            fetchChildren(r->children.at(2), v);
+            v = AST::fetchLeaves(r->children.at(2));
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "auto a" << table->lookup(r->children.at(3)->content)->second[/*r->children.at(3)->scope*/0];
-            descend(r->children.at(2), fs, tabs);
+            fs << "auto a" << table->lookup(r->children.at(3)->content)->second[/*r->children.at(3)->scope*/0] << " = [](";
+            for (int i = v->size()-2; i > 0; i-=2)
+                fs << " auto a" << table->lookup(v->at(i)->content)->second[/*v->back()->scope*/0] << v->at(i-1)->content;
             descend(r->children.at(0), fs, tabs);
+            fs << ";\n";
             break;
         case 49:
             fs << " {\n";
             descend(r->children.back(), fs, tabs+1);
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "}\n";
+            fs << "}";
             break;
         case 50:
             fs << " {\n";
             descend(r->children.at(1), fs, tabs+1);
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "}\n";
+            fs << "}";
             break;
         default:
             for (unsigned i = r->children.size(); i-- > 0; )
@@ -194,8 +202,8 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
     }*/
 }
 
-void compiler::Translator::fetchChildren(Node *r, std::vector<Node*> &v) {
+/*void compiler::Translator::v = AST::fetchLeaves(Node *r, std::vector<Node*> &v) {
     for(auto &i : r->children)
-        fetchChildren(i,v);
-    if(r->regra==-1) v.push_back(r);
-}
+        v = AST::fetchLeaves(i,v);
+    if(r->regra==-1) v->push_back(r);
+}*/

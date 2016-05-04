@@ -81,6 +81,7 @@ namespace compiler {
         Node* addChild(Node*, Node*);
         Node* getRoot();
         void setRoot(Node*);
+        static std::vector<Node*> *fetchLeaves(Node*);
     private:
         Node* root;
     };

@@ -21,7 +21,7 @@ namespace compiler {
         void translate();
     private:
         void descend(Node*, std::ofstream&, int);
-        void fetchChildren(Node*, std::vector<Node*>&);
+        //void fetchChildren(Node*, std::vector<Node*>&);
         AST *ast;
         SymbolTable *table;
     };

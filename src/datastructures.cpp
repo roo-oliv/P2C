@@ -169,7 +169,22 @@ void compiler::AST::setRoot(Node* nroot){
     root = nroot;
 }
 
-compiler::SymbolTable::SymbolTable() { }
+std::vector<compiler::Node*> *compiler::AST::fetchLeaves(Node *r) {
+    std::vector<Node*> *u, *v = new std::vector<Node*>;
+    for(auto &i : r->children) {
+        u = fetchLeaves(i);
+        v->reserve(v->size()+u->size());
+        v->insert(v->end(), u->begin(), u->end());
+    }
+    if(r->regra==-1) v->push_back(r);
+    return v;
+}
+
+
+compiler::SymbolTable::SymbolTable() {
+    this->insert("print", 8, -1, -1, 1);
+    this->insert("abs", 8, -1, -1, 1);
+}
 
 compiler::SymbolTable::~SymbolTable() { }
 
