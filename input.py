@@ -1,4 +1,4 @@
-def x(a, b=1):
+def x(a, b):
     return a*b
 
 print(x(8,7))

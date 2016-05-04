@@ -14,7 +14,7 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
             std::cerr << "\n\n---------SEMANTIC ANALYZER---------\n\n";
         #endif
         decorate(root);
-        fillTable(root);
+        fillTable(root, 0);
         /*Token resultant = descend(root);
         if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
             std::vector<Token> expression = {resultant};
@@ -30,42 +30,53 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
 
 
 
-void compiler::SemanticAnalyzer::fillTable(Node *root) {
-    if(root->regra == 21){
-         std::vector<Node*> *v;
-         v = AST::fetchLeaves(root->children[1]);
-    	table.insert(root->children[1]->content,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
-    	#ifdef DEBUG
-            //for (unsigned i = 0; i < root->children.size(); i++ )
-            std::cerr << "Include in table the variable: '"<< root->children[1]->content << "' ";
-            std::cerr <<"\nColumn: "<< v->at(0)->tk->col<< "";
-            std::cerr <<"\nLine: "<< v->at(0)->tk->lin<< "\n";
-            std::cerr << std::endl;
-      	#endif
-        return;
+void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
+    int aux;
+    std::vector<Node*> *v;
+    switch (root->regra) {
+        case 21:
+            v = AST::fetchLeaves(root->children[1]);
+        	table.insert(root->children[1]->content,scope,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
+            v->at(0)->scope = scope;
+            #ifdef DEBUG
+                //for (unsigned i = 0; i < root->children.size(); i++ )
+                std::cerr << "Include in table the variable: '"<< root->children[1]->content << "' ";
+                std::cerr <<"\nColumn: "<< v->at(0)->tk->col<< "";
+                std::cerr <<"\nLine: "<< v->at(0)->tk->lin<< "\n";
+                std::cerr << std::endl;
+          	#endif
+            return;
+        case 44: case 45: case 61: case 62: case 63: case 64: case 65:
+            table.scopes.push_back(scope);
+            aux = table.scopes.size()-1;
+            for(auto &i : root->children) {
+                i->scope = aux;
+                fillTable(i, aux);
+            }
+            return;
+        case 46:
+            v = AST::fetchLeaves(root->children[2]);
+            table.insert(root->children[3]->content,scope,root->children[3]->kind,root->children[3]->tk->lin,root->children[3]->tk->col,(v->size() - 1)/2);
+            root->children[3]->scope = scope;
+            #ifdef DEBUG
+                std::cerr << "Include in table the function '"<< root->children[3]->content << "' with ";
+    	        std::cerr << (v->size() - 1)/2<< " arguments.";
+                std::cerr <<"\nColumn: "<< root->children[3]->tk->col<< "";
+                std::cerr <<"\nLine: "<< root->children[3]->tk->lin<< "\n";
+                std::cerr << std::endl;
+          	#endif
+            table.scopes.push_back(scope);
+            aux = table.scopes.size()-1;
+            for(auto &i : root->children) {
+                i->scope = aux;
+                fillTable(i, aux);
+            }
+            return;
+        default:
+            for(auto &i : root->children)
+                fillTable(i, scope);
+            return;
     }
-    if(root->regra == 46){
-        std::vector<Node*> *v1;
-        std::vector<Node*> *v2;
-        v1 = AST::fetchLeaves(root->children[2]);
-        v2 = AST::fetchLeaves(root->children[3]);
-        table.insert(root->children[3]->content,root->children[3]->kind,v2->at(0)->tk->lin,v2->at(0)->tk->col,(v1->size() - 1)/2);
-    	#ifdef DEBUG
-            std::cerr << "Include in table the function '"<< root->children[3]->content << "' with ";
-	        std::cerr << (v1->size() - 1)/2<< " arguments.";
-            std::cerr <<"\nColumn: "<< v2->at(0)->tk->col<< "";
-            std::cerr <<"\nLine: "<< v2->at(0)->tk->lin<< "\n";
-            std::cerr << std::endl;
-      	#endif
-
-    }
-    for(auto &i : root->children)
-        fillTable(i);
-
-    /*#ifdef DEBUG
-        std::cerr << root->kind << std::endl;
-    #endif*/
-
 }
 
 compiler::SymbolTable* compiler::SemanticAnalyzer::getSymbolTable() {return &table;}

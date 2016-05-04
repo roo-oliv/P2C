@@ -38,7 +38,7 @@ namespace compiler {
     };
 
     struct Symbol {
-        int kind, lin, col, args;
+        int kind, lin, col, args, scope;
         std::string name;
     };
 
@@ -90,9 +90,10 @@ namespace compiler {
 	public:
 		SymbolTable();
 		~SymbolTable();
-		HashTable::iterator insert(std::string, int, int, int, int);
+		HashTable::iterator insert(std::string, int, int, int, int, int);
 		//void erase(std::string, int);
-		HashTable::iterator lookup(std::string);
+		void *lookup(std::string, int);
+        std::vector<int> scopes;
 	private:
 		HashTable table;
 	};

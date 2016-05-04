@@ -23,7 +23,7 @@ namespace compiler {
         SymbolTable* getSymbolTable();
 	private:
 		SymbolTable table;
-       	void fillTable(Node*);
+       	void fillTable(Node*, int);
 		void decorate(Node*);
 		Token descend(Node*);
 		int getType(Token*);

@@ -182,17 +182,20 @@ std::vector<compiler::Node*> *compiler::AST::fetchLeaves(Node *r) {
 
 
 compiler::SymbolTable::SymbolTable() {
-    this->insert("print", 8, -1, -1, 1);
-    this->insert("abs", 8, -1, -1, 1);
+    this->insert("print", -1, 8, -1, -1, 1);
+    this->insert("abs", -1, 8, -1, -1, 1);
 }
 
-compiler::SymbolTable::~SymbolTable() { }
+compiler::SymbolTable::~SymbolTable() {
+    scopes.push_back(-1);
+}
 
 compiler::HashTable::iterator compiler::SymbolTable::insert(
-    std::string name, int kind, int lin, int col, int args
+    std::string name, int scope, int kind, int lin, int col, int args
     ) {
     Symbol *s = new Symbol;
     s->name = name;
+    s->scope = scope;
     s->kind = kind;
     s->lin = lin;
     s->col = col;
@@ -220,4 +223,10 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
     }
 }*/
 
-compiler::HashTable::iterator compiler::SymbolTable::lookup(std::string name) { return table.find(name); }
+void *compiler::SymbolTable::lookup(std::string name, int scope) {
+    compiler::HashTable::iterator it = table.find(name);
+    for(auto &s : it->second)
+        if(s->scope==scope)
+            return s;
+    lookup(name, scopes[scope]);
+}
