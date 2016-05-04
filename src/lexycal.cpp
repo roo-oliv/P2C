@@ -1,5 +1,7 @@
 #include "lexycal.hpp"
 
+using namespace std;
+
 compiler::LexycalAnalyzer::LexycalAnalyzer() {
     content = "";
     column = state = initial_col = space = 0;
