@@ -85,10 +85,10 @@ int compiler::SyntaxAnalyzer::analyze(Token* t) {
     int state;
     std::stack<Node*> nodes;
     states.push(0);
-    int c = 0;
+    //int c = 0;
     // analizador sintático
     while(1) {
-        c++;
+        //c++;
         //define estado atual como o estado do topo da pilha
         state = states.top();
         #ifdef DEBUG
