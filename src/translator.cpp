@@ -12,8 +12,8 @@ void compiler::Translator::translate() {
     std::ofstream fs("output.cpp");
     fs << "#include <iostream>\n"
         << "#include \"pybuiltins.hpp\"\n"
-        << "\n#define a" << table->lookup("print", -1) << "(arg) print(arg)\n"
-        << "#define a" << table->lookup("abs", -1) << "(arg) abs(arg)\n"
+        << "\n#define a" << table->lookup("print", 0) << "(arg) print(arg)\n"
+        << "#define a" << table->lookup("abs", 0) << "(arg) abs(arg)\n"
         << "\nint main() {\n";
     #ifdef DEBUG
         std::cerr << "\n\n----------TRANSLATOR----------\n\n";
@@ -30,6 +30,7 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
         case -1:
             switch (r->tk->type) {
                 case 11:
+                    std::cerr << r->content << ":" << r->scope << "=" << table->lookup(r->content, r->scope) << "\n";
                     fs << "a" << table->lookup(r->content, r->scope);
                     break;
                 case 29: case 31: case 33:
@@ -107,16 +108,20 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
         case 46:
             v = AST::fetchLeaves(r->children.at(2));
             for(int i=0; i<tabs; i++) fs << "\t";
-            fs << "auto a" << table->lookup(r->children.at(3)->content, r->children.at(3)->scope) << " = [](";
+            fs << "auto a" << table->lookup(r->children.at(3)->content, r->children.at(3)->scope) << " = []";
             //for (int i = v->size()-2; i > 0; i-=2)
             //    fs << " auto a" << table->lookup(v->at(i)->content)->second[/*v->at(i)->scope*/0] << v->at(i-1)->content;
             for (unsigned i = v->size(); i-- > 1; ) {
-                std::cerr << v->at(i)->content << "(" << v->at(i)->kind << ") ";
-                if(v->at(i)->kind==5)
-                    fs << v->at(i)->content << " auto a" << table->lookup(v->at(--i)->content, v->at(i)->scope);
-                else
+                if(v->at(i)->kind==5) {
+                    //std::cerr << "To lookup: " << v->at(i-1)->content << " in scope " << v->at(i-1)->scope << "\n";
+                    fs << v->at(i)->content << " auto a" << table->lookup(v->at(i-1)->content, v->at(i-1)->scope);
+                    i--;
+                    //std::cerr << "Success!\n";
+                } else {
                     fs << v->at(i)->content;
+                }
             }
+            fs << ") ";
             descend(r->children.at(0), fs, tabs);
             fs << ";\n";
             break;
@@ -132,6 +137,10 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             for(int i=0; i<tabs; i++) fs << "\t";
             fs << "}";
             break;
+        /*case 92:
+            std::cerr << "92: " << r->children.back()->content << ":" << r->children.back()->scope << "=" << table->lookup(r->children.back()->content, r->children.back()->scope) << "\n";
+            fs << "a" << table->lookup(r->children.back()->content, r->children.back()->scope);
+            break;*/
         default:
             for (unsigned i = r->children.size(); i-- > 0; )
                 descend(r->children.at(i), fs, tabs);

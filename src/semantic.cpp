@@ -34,6 +34,9 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
     int aux;
     std::vector<Node*> *v;
     switch (root->regra) {
+        case -1:
+            root->scope = scope;
+            return;
         case 21:
             v = AST::fetchLeaves(root->children[1]);
         	table.insert(root->children[1]->content,scope,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
@@ -56,6 +59,18 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
             return;
         case 46:
             v = AST::fetchLeaves(root->children[2]);
+            table.scopes.push_back(scope);
+            aux = table.scopes.size()-1;
+            for(auto &i : *v) {
+                if(i->kind==20) {
+                    i->kind=6;
+                    i->scope = aux;
+                    #ifdef DEBUG
+                        std::cerr << "to insert " << i->content << " in scope " << aux << "\n";
+                    #endif
+                    table.insert(i->content,aux,i->kind,i->tk->lin,i->tk->col,0);
+                }
+            }
             table.insert(root->children[3]->content,scope,root->children[3]->kind,root->children[3]->tk->lin,root->children[3]->tk->col,(v->size() - 1)/2);
             root->children[3]->scope = scope;
             #ifdef DEBUG
@@ -65,12 +80,7 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
                 std::cerr <<"\nLine: "<< root->children[3]->tk->lin<< "\n";
                 std::cerr << std::endl;
           	#endif
-            table.scopes.push_back(scope);
-            aux = table.scopes.size()-1;
-            for(auto &i : root->children) {
-                i->scope = aux;
-                fillTable(i, aux);
-            }
+            fillTable(root->children.at(0), aux);
             return;
         default:
             for(auto &i : root->children)

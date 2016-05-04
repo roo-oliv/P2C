@@ -182,12 +182,13 @@ std::vector<compiler::Node*> *compiler::AST::fetchLeaves(Node *r) {
 
 
 compiler::SymbolTable::SymbolTable() {
-    this->insert("print", -1, 8, -1, -1, 1);
-    this->insert("abs", -1, 8, -1, -1, 1);
+    scopes.push_back(-1);
+    this->insert("print", 0, 8, -1, -1, 1);
+    this->insert("abs", 0, 8, -1, -1, 1);
 }
 
 compiler::SymbolTable::~SymbolTable() {
-    scopes.push_back(-1);
+
 }
 
 compiler::HashTable::iterator compiler::SymbolTable::insert(
@@ -196,6 +197,7 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
     Symbol *s = new Symbol;
     s->name = name;
     s->scope = scope;
+    //std::cerr << "Received scope for " << name << ": " << scope;
     s->kind = kind;
     s->lin = lin;
     s->col = col;
@@ -224,9 +226,19 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
 }*/
 
 void *compiler::SymbolTable::lookup(std::string name, int scope) {
+    if(name=="print") {
+        std::cerr << "PRINT:\n";
+    }
     compiler::HashTable::iterator it = table.find(name);
-    for(auto &s : it->second)
-        if(s->scope==scope)
+    if(it==table.end()) {
+        std::cerr << "SymbolTable Error: name \'" << name << "\' not found!\n";
+    }
+    for(auto &s : it->second) {
+        std::cerr << s->scope << " ? " << scope << "\n";
+        if(s->scope==scope) {
+            std::cerr << s << "\n";
             return s;
+        }
+    }
     lookup(name, scopes[scope]);
 }
