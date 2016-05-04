@@ -197,7 +197,7 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
     s->lin = lin;
     s->col = col;
     s->args = args;
-    auto it = table.find(name);
+    HashTable::iterator it = table.find(name);
     if(it==table.end()) {
         std::vector<Symbol*> v = {s};
         return table.insert(it, HashTable::value_type(name, v));

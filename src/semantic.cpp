@@ -8,14 +8,13 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
     Node *root = ast->getRoot();
     std::stringstream ss;
     exception *e;
-    SymbolTable *table;
 
     try {
         #ifdef DEBUG
             std::cerr << "\n\n---------SEMANTIC ANALYZER---------\n\n";
         #endif
         decorate(root);
-        fillTable(root,table);
+        fillTable(root);
         /*Token resultant = descend(root);
         if(resultant.type==30 || resultant.type==22 || resultant.type==36) {
             std::vector<Token> expression = {resultant};
@@ -31,19 +30,18 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
 
 
 
-void compiler::SemanticAnalyzer::fillTable(Node *root, SymbolTable *table) {
+void compiler::SemanticAnalyzer::fillTable(Node *root) {
     if(root->regra == 21){
          std::vector<Node*> *v;
          v = AST::fetchLeaves(root->children[1]);
-	table->insert(root->children[1]->content,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
-	#ifdef DEBUG
-//        for (unsigned i = 0; i < root->children.size(); i++ )
-            
+    	table.insert(root->children[1]->content,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
+    	#ifdef DEBUG
+            //for (unsigned i = 0; i < root->children.size(); i++ )
             std::cerr << "Include in table the variable: '"<< root->children[1]->content << "' ";
-	    std::cerr <<"\nColumn: "<< v->at(0)->tk->col<< "";
+            std::cerr <<"\nColumn: "<< v->at(0)->tk->col<< "";
             std::cerr <<"\nLine: "<< v->at(0)->tk->lin<< "\n";
             std::cerr << std::endl;
-  	#endif	
+      	#endif
         return;
     }
     if(root->regra == 46){
@@ -51,18 +49,18 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, SymbolTable *table) {
         std::vector<Node*> *v2;
         v1 = AST::fetchLeaves(root->children[2]);
         v2 = AST::fetchLeaves(root->children[3]);
-        table->insert(root->children[3]->content,root->children[3]->kind,v2->at(0)->tk->lin,v2->at(0)->tk->col,(v1->size() - 1)/2);
-	#ifdef DEBUG
-            std::cerr << "Include in table the function '"<< root->children[3]->content << "' with ";	    	    	
-	    std::cerr << (v1->size() - 1)/2<< " arguments.";
+        table.insert(root->children[3]->content,root->children[3]->kind,v2->at(0)->tk->lin,v2->at(0)->tk->col,(v1->size() - 1)/2);
+    	#ifdef DEBUG
+            std::cerr << "Include in table the function '"<< root->children[3]->content << "' with ";
+	        std::cerr << (v1->size() - 1)/2<< " arguments.";
             std::cerr <<"\nColumn: "<< v2->at(0)->tk->col<< "";
             std::cerr <<"\nLine: "<< v2->at(0)->tk->lin<< "\n";
             std::cerr << std::endl;
-  	#endif
-        
+      	#endif
+
     }
     for(auto &i : root->children)
-        fillTable(i, table);
+        fillTable(i);
 
     /*#ifdef DEBUG
         std::cerr << root->kind << std::endl;
@@ -244,7 +242,6 @@ void compiler::SemanticAnalyzer::decorate(Node *root) { // Decorate tree with no
 int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression) {
     std::stringstream ss;
     exception *e;
-    SymbolTable table;
     #ifdef DEBUG
         std::cerr << "\tConcatenating children from node of rule " << expression[0]->parent->regra << std::endl;
     #endif

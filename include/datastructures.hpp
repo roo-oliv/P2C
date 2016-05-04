@@ -39,7 +39,7 @@ namespace compiler {
 
     struct Symbol {
         int kind, lin, col, args;
-        std::string name, content;
+        std::string name;
     };
 
 	typedef std::unordered_map<std::string, std::vector<Symbol*>> HashTable;

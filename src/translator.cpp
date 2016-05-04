@@ -106,8 +106,14 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             v = AST::fetchLeaves(r->children.at(2));
             for(int i=0; i<tabs; i++) fs << "\t";
             fs << "auto a" << table->lookup(r->children.at(3)->content)->second[/*r->children.at(3)->scope*/0] << " = [](";
-            for (int i = v->size()-2; i > 0; i-=2)
-                fs << " auto a" << table->lookup(v->at(i)->content)->second[/*v->back()->scope*/0] << v->at(i-1)->content;
+            //for (int i = v->size()-2; i > 0; i-=2)
+            //    fs << " auto a" << table->lookup(v->at(i)->content)->second[/*v->at(i)->scope*/0] << v->at(i-1)->content;
+            for (unsigned i = v->size(); i-- > 1; ) {
+                if(v->at(i)->kind==5)
+                    fs << v->at(i)->content << " auto a" << table->lookup(v->at(--i)->content)->second[/*v->at(i)->scope*/0];
+                else
+                    fs << v->at(i)->content;
+            }
             descend(r->children.at(0), fs, tabs);
             fs << ";\n";
             break;
