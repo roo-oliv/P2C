@@ -83,17 +83,23 @@ int compiler::SyntaxAnalyzer::analyze(Token* t) {
     int state;
     std::stack<Node*> nodes;
     states.push(0);
-    int c = 0;
+    //int c = 0;
     // analizador sintático
     while(1) {
-        c++;
+        //c++;
         //define estado atual como o estado do topo da pilha
         state = states.top();
         #ifdef DEBUG
-            printf("Estado: %d, Token atual: %d (%s), ",state,t->type-1,t->lexema.c_str());
+            printf("Estado: %d, Token atual: %d (%s), ",state,t->type,t->lexema.c_str());
         #endif
-        //pega a action atual na tabela a partir do estado e do token
-        std::string action_now = action[state][t->type-1];
+        std::string action_now;
+        if(t->type!=-1) {
+            //pega a action atual na tabela a partir do estado e do token
+           action_now = action[state][t->type-1];
+        } else {
+            std::cout << "\nLexycal error detected.\n\n";
+            break;
+        }
         #ifdef DEBUG
             printf("Action: %s\n", action_now.c_str());
         #endif
