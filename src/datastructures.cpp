@@ -173,7 +173,9 @@ compiler::SymbolTable::SymbolTable() { }
 
 compiler::SymbolTable::~SymbolTable() { }
 
-compiler::HashTable::iterator compiler::SymbolTable::insert(std::string name, int kind, int type, std::pair<int, int> pos, int scope, std::string content) {
+compiler::HashTable::iterator compiler::SymbolTable::insert(
+    std::string name, int kind, int lin, int col, int args
+    ) {
     Symbol *s = new Symbol;
     s->name = name;
     s->kind = kind;

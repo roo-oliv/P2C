@@ -90,7 +90,7 @@ namespace compiler {
 	public:
 		SymbolTable();
 		~SymbolTable();
-		HashTable::iterator insert(std::string, int, int, std::pair<int, int>, int, std::string);
+		HashTable::iterator insert(std::string, int, int, int, int);
 		void erase(std::string, int);
 		HashTable::iterator lookup(std::string);
 	private:

@@ -20,7 +20,8 @@ namespace compiler {
         ~Translator();
         void translate();
     private:
-        void descend(Node*, std::fstream*);
+        void descend(Node*, std::ofstream&, int);
+        void fetchChildren(Node*, std::vector<Node*>&);
         AST *ast;
         SymbolTable *table;
     };
