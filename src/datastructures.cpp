@@ -179,10 +179,9 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
     Symbol *s = new Symbol;
     s->name = name;
     s->kind = kind;
-    s->type = type;
-    s->pos = pos;
-    s->scope = scope;
-    s->content = content;
+    s->lin = lin;
+    s->col = col;
+    s->args = args;
     auto it = table.find(name);
     if(it==table.end()) {
         std::vector<Symbol*> v = {s};
@@ -193,7 +192,7 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
     }
 }
 
-void compiler::SymbolTable::erase(std::string name, int scope) {
+/*void compiler::SymbolTable::erase(std::string name, int scope) {
     auto it = table.find(name);
     if(it!=table.end()) {
         for(auto i = it->second.begin(); i != it->second.end(); ++i) {
@@ -204,6 +203,6 @@ void compiler::SymbolTable::erase(std::string name, int scope) {
         }
         if(it->second.empty()) table.erase(it);
     }
-}
+}*/
 
 compiler::HashTable::iterator compiler::SymbolTable::lookup(std::string name) { return table.find(name); }

@@ -11,7 +11,7 @@ void compiler::Translator::translate() {
     Node *root = ast->getRoot();
     std::ofstream fs("output.cpp");
     fs << "#include <iostream>\n\n"
-        << "int main() {\n\t";
+        << "int main() {\n";
     #ifdef DEBUG
         std:cerr << "\n\n----------TRANSLATOR----------\n\n");
     #endif
@@ -22,7 +22,6 @@ void compiler::Translator::translate() {
 
 void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
     std::vector<Node*> v;
-    std::pair<int, int> p;
     switch (r->regra) {
         case -1:
             switch (r->tk->type) {
@@ -76,8 +75,7 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             break;
         case 44:
             fetchChildren(r->children.at(2), v);
-            p = {r->children.back()->tk->lin,r->children.back()->tk->col};
-            table->insert("__cmpvar__", 7, 0, p, 0, "__cmpvar__");
+            table->insert("__cmpvar__", 7, r->children.back()->tk->lin, r->children.back()->tk->col, 0);
             for(int i=0; i<tabs; i++) fs << "\t";
             fs << "auto " << "a" << table->lookup("__cmpvar__")->second[/*v.back()->scope*/0] << " = ";
             if(v.size()>1) {
