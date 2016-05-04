@@ -1,4 +1,8 @@
-def x(a, b):
-    return 83*b
+def foo(a, b):
+    return a*b
 
-print(x(8,7))
+def bar(a):
+    for i in [1,2,3,4]:
+        print(foo(a,i))
+
+bar(7)

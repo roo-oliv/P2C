@@ -233,5 +233,5 @@ void *compiler::SymbolTable::lookup(std::string name, int scope) {
     for(auto &s : it->second)
         if(s->scope==scope)
             return s;
-    lookup(name, scopes[scope]);
+    return lookup(name, scopes[scope]);
 }

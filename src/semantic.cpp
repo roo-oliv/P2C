@@ -49,7 +49,26 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
                 std::cerr << std::endl;
           	#endif
             return;
-        case 44: case 45: case 61: case 62: case 63: case 64: case 65:
+        case 44:
+            v = AST::fetchLeaves(root->children[4]);
+            table.scopes.push_back(scope);
+            aux = table.scopes.size()-1;
+            for(auto &i: *v) {
+                if(i->kind==20) {
+                    i->kind = 6;
+                    i->scope = aux;
+                    #ifdef DEBUG
+                        std::cerr << "to insert " << i->content << " in scope " << aux << "\n";
+                    #endif
+                    table.insert(i->content,aux,i->kind,i->tk->lin,i->tk->col,0);
+                }
+            }
+            for(auto &i : root->children) {
+                i->scope = aux;
+                fillTable(i, aux);
+            }
+            return;
+        case 45: case 61: case 62: case 63: case 64: case 65:
             table.scopes.push_back(scope);
             aux = table.scopes.size()-1;
             for(auto &i : root->children) {
