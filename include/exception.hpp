@@ -15,11 +15,13 @@
 namespace compiler {
     class exception: public std::exception {
 	public:
-		exception(Node&, std::string);
+		exception(Token&, std::string);
+    	exception(Node&, std::string);
 		virtual const char* what() const throw();
 	private:
 		std::string message;
-		void formExpression(Node&, std::stringstream&, bool&);
+		void formExpression(Node*, std::stringstream&, bool&);
+        void formExpression(Token*, std::stringstream&, bool&);
 	};
 }
 

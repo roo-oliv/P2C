@@ -30,7 +30,6 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
         case -1:
             switch (r->tk->type) {
                 case 11:
-                    std::cerr << r->content << ":" << r->scope << "=" << table->lookup(r->content, r->scope) << "\n";
                     fs << "a" << table->lookup(r->content, r->scope);
                     break;
                 case 29: case 31: case 33:

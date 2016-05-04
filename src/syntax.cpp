@@ -65,6 +65,8 @@ int compiler::SyntaxAnalyzer::analyze(Token* t) {
     #ifdef DEBUG
         printf("\n\n%s\n\n", "Loading tables...");
     #endif
+    std::stringstream ss;
+    exception *e;
     // Fill action and goto tables from CSV tables
     try {
         fillTable(action, "../include/action.csv");
@@ -83,23 +85,24 @@ int compiler::SyntaxAnalyzer::analyze(Token* t) {
     int state;
     std::stack<Node*> nodes;
     states.push(0);
-    //int c = 0;
+    int c = 0;
     // analizador sintático
     while(1) {
-        //c++;
+        c++;
         //define estado atual como o estado do topo da pilha
         state = states.top();
         #ifdef DEBUG
             printf("Estado: %d, Token atual: %d (%s), ",state,t->type,t->lexema.c_str());
         #endif
-        std::string action_now;
-        if(t->type!=-1) {
-            //pega a action atual na tabela a partir do estado e do token
-           action_now = action[state][t->type-1];
-        } else {
-            std::cout << "\nLexycal error detected.\n\n";
-            break;
+
+        if(t->type==-1) {
+            ss << "SyntaxError: Invalid token \'" << t->lexema << "\'";
+            e = new exception(*(t), ss.str());
+            throw *e;
         }
+
+        //pega a action atual na tabela a partir do estado e do token
+        std::string action_now = action[state][t->type-1];
         #ifdef DEBUG
             printf("Action: %s\n", action_now.c_str());
         #endif

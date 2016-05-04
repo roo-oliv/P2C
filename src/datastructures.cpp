@@ -226,19 +226,12 @@ compiler::HashTable::iterator compiler::SymbolTable::insert(
 }*/
 
 void *compiler::SymbolTable::lookup(std::string name, int scope) {
-    if(name=="print") {
-        std::cerr << "PRINT:\n";
-    }
     compiler::HashTable::iterator it = table.find(name);
     if(it==table.end()) {
         std::cerr << "SymbolTable Error: name \'" << name << "\' not found!\n";
     }
-    for(auto &s : it->second) {
-        std::cerr << s->scope << " ? " << scope << "\n";
-        if(s->scope==scope) {
-            std::cerr << s << "\n";
+    for(auto &s : it->second)
+        if(s->scope==scope)
             return s;
-        }
-    }
     lookup(name, scopes[scope]);
 }

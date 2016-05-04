@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stack>
 #include "datastructures.hpp"
+#include "exception.hpp"
 
 namespace compiler {
     class SyntaxAnalyzer {
