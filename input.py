@@ -1,8 +1,13 @@
-def foo(a, b):
-    return a*b
+x = 8.0
+b = x+4
+if(b>x):
+    print(b/4)
 
-def bar(a):
-    for i in [1,2,3,4]:
-        print(foo(a,i))
-
-bar(7)
+if(b<0):
+    print(-1)
+elif(b>0 and x < 4):
+    print(-2)
+elif(b==0 or b>10):
+    print(1)
+else:
+    print(-3)

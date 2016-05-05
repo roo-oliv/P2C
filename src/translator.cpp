@@ -26,11 +26,33 @@ void compiler::Translator::translate() {
 void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
     int aux;
     std::vector<Node*> *v;
+    #ifdef DEBUG
+        std::cerr << "Content = " << r->content << " : Kind = " << r->getKindName() << " : Rule = " << r->regra << "\n";
+    #endif
     switch (r->regra) {
         case -1:
             switch (r->tk->type) {
+                case 3:
+                    fs << " || ";
+                    break;
+                case 4:
+                    fs << " && ";
+                    break;
+                case 5:
+                    fs << "!";
+                    break;
                 case 11:
+                    //std::cerr << r->content << " : " << r->scope << "\n";
                     fs << "a" << table->lookup(r->content, r->scope);
+                    break;
+                case 15:
+                    fs << "true";
+                    break;
+                case 19:
+                    fs << "else if";
+                    break;
+                case 25:
+                    fs << "false";
                     break;
                 case 29: case 31: case 33:
                     break;
@@ -135,6 +157,26 @@ void compiler::Translator::descend(Node *r, std::ofstream &fs, int tabs) {
             descend(r->children.at(1), fs, tabs+1);
             for(int i=0; i<tabs; i++) fs << "\t";
             fs << "}";
+            break;
+        case 61: case 62: case 63: case 64:
+            //fs << r->children.back()->content;
+            for (unsigned i = r->children.size(); i-- > 0; ) {
+                if(r->children.at(i)->kind!=5) {
+                    /*std::cerr << r->children.at(i)->content << " ";
+                    std::cerr << "\n";*/
+                    descend(r->children.at(i), fs, tabs);
+                }
+            }
+            break;
+        /*case 64:
+            fs << "else";
+            descend(r->children.at(0), fs, tabs);
+            break;*/
+        case 70: case 72: case 73:
+            fs << "(";
+            for (unsigned i = r->children.size(); i-- > 0; )
+                descend(r->children.at(i), fs, tabs);
+            fs << ")";
             break;
         /*case 92:
             std::cerr << "92: " << r->children.back()->content << ":" << r->children.back()->scope << "=" << table->lookup(r->children.back()->content, r->children.back()->scope) << "\n";

@@ -33,13 +33,15 @@ int compiler::SemanticAnalyzer::analyze(AST *ast) {
 void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
     int aux;
     std::vector<Node*> *v;
+    //std::cerr << root->content << " : " << root->regra << "\n";
     switch (root->regra) {
         case -1:
+            //std::cerr << root->content << " : " << scope << "\n";
             root->scope = scope;
             return;
         case 21:
             v = AST::fetchLeaves(root->children[1]);
-        	table.insert(root->children[1]->content,scope,root->children[1]->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
+        	table.insert(v->at(0)->content,scope,v->at(0)->kind,v->at(0)->tk->lin,v->at(0)->tk->col,0);
             v->at(0)->scope = scope;
             #ifdef DEBUG
                 //for (unsigned i = 0; i < root->children.size(); i++ )
@@ -48,6 +50,7 @@ void compiler::SemanticAnalyzer::fillTable(Node *root, int scope) {
                 std::cerr <<"\nLine: "<< v->at(0)->tk->lin<< "\n";
                 std::cerr << std::endl;
           	#endif
+            fillTable(root->children[0], scope);
             return;
         case 44:
             v = AST::fetchLeaves(root->children[4]);
@@ -322,6 +325,8 @@ int compiler::SemanticAnalyzer::concat(int rule, std::vector<Node*> &expression)
             ss << "SyntaxError: invalid syntax";
             e = new exception(*(expression[0]->parent), ss.str());
             throw *e;
+        case 76: // $ > $ | $ < $ | $ >= $ | $ <= $ | $ == $ | $ != $
+            return 10; // return BOOLEAN kind
         case 78: // $ + $ | $ - $
             expression[1]->kind = 1; // resolving pending kind to BINARY_OPERATOR
             if((expression[0]->kind==11 || expression[2]->kind==11) || // Can't handle tuples
